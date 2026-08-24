@@ -1,49 +1,106 @@
-import { useState } from 'react';
-import { MOCK_PRODUCTS } from '../data/mockProducts';
-import { ProductGrid } from '../components/product/ProductGrid';
-import styles from './ProductsPage.module.css';
+import { useState, useEffect, useMemo } from 'react';
+import { useProducts } from '../hooks/useProducts';
+import ProductGrid from '../components/product/ProductGrid';
+import Button from '../components/common/Button/Button';
 
-const CATEGORIES = ['Todas', 'Productividad', 'Workspace', 'Audio', 'Smart Home', 'Creatividad'];
+const CATEGORY_LABELS = {
+  Productividad: 'Productividad',
+  Workspace: 'Workspace',
+  Audio: 'Audio',
+  SmartHome: 'Smart Home',
+  Creatividad: 'Creatividad',
+};
 
-export const ProductsPage = () => {
+const CATEGORIES = Object.keys(CATEGORY_LABELS);
+
+const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [category, setCategory] = useState('');
 
-  const filteredProducts = MOCK_PRODUCTS.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'Todas' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  const queryParams = useMemo(() => {
+    const params = {};
+    if (category) params.category = category;
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+    return params;
+  }, [category, debouncedSearch]);
+
+  const { products = [], loading, error, refetch } = useProducts(queryParams);
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Catálogo Completo</h1>
-
-      <div className={styles.filterBar}>
+    <main style={{ padding: '2rem 1rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <input
-          type="text"
-          placeholder="Buscar productos por nombre..."
+          type="search"
+          placeholder="Buscar productos..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className={styles.searchInput}
+          style={{
+            padding: '0.75rem 1rem',
+            flex: '1',
+            minWidth: '240px',
+            borderRadius: '6px',
+            border: '1px solid #cbd5e1',
+            fontSize: '0.9rem',
+            outline: 'none',
+          }}
         />
 
-        <div className={styles.categoryGroup}>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          style={{
+            padding: '0.75rem 1rem',
+            borderRadius: '6px',
+            border: '1px solid #cbd5e1',
+            fontSize: '0.9rem',
+            backgroundColor: '#ffffff',
+            cursor: 'pointer',
+          }}
+        >
+          <option value="">Todas las categorías</option>
           {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`${styles.categoryBtn} ${
-                selectedCategory === cat ? styles.categoryBtnActive : ''
-              }`}
-            >
-              {cat}
-            </button>
+            <option key={cat} value={cat}>
+              {CATEGORY_LABELS[cat]}
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
-      <ProductGrid products={filteredProducts} />
-    </div>
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#64748b' }}>
+          <p>Cargando catálogo de productos...</p>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <p style={{ color: '#ef4444', marginBottom: '1.25rem', fontWeight: '500' }}>{error}</p>
+          <Button onClick={refetch} variant="primary">
+            Reintentar
+          </Button>
+        </div>
+      )}
+
+      {!loading && !error && products.length === 0 && (
+        <p style={{ textAlign: 'center', padding: '4rem 2rem', color: '#64748b' }}>
+          No se encontraron productos.
+        </p>
+      )}
+
+      {!loading && !error && products.length > 0 && (
+        <ProductGrid products={products} />
+      )}
+    </main>
   );
 };
+
+export default ProductsPage;

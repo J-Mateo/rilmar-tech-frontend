@@ -1,17 +1,23 @@
 import { Link } from 'react-router-dom';
 import styles from './ProductCard.module.css';
 
-export const ProductCard = ({ product }) => {
+const ProductCard = ({ product }) => {
+  // Extraemos la primera foto del array 'images', o caemos en un fallback si está vacío
+  const mainImage = product.images?.[0] || 'https://via.placeholder.com/400x300';
+
   return (
     <div className={styles.productCard}>
       <div className={styles.productImageContainer}>
-        <img 
-          src={product.imageUrl} 
-          alt={product.name} 
-          className={styles.productImage} 
+        <img
+          src={mainImage}
+          alt={product.name}
+          className={styles.productImage}
         />
+
         {product.category && (
-          <span className={styles.productBadge}>{product.category}</span>
+          <span className={styles.productBadge}>
+            {product.category}
+          </span>
         )}
       </div>
 
@@ -20,13 +26,12 @@ export const ProductCard = ({ product }) => {
 
         <div className={styles.productFooter}>
           <span className={styles.productPrice}>
-            ${product.price.toFixed(2)}
+            {Number(product.price).toFixed(2)} €
           </span>
-          
-          <Link 
+
+          <Link
             to={`/products/${product.id}`}
             className={styles.addCartBtn}
-            style={{ textDecoration: 'none' }}
           >
             Ver detalles
           </Link>
@@ -35,3 +40,5 @@ export const ProductCard = ({ product }) => {
     </div>
   );
 };
+
+export default ProductCard;

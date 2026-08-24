@@ -1,53 +1,143 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '../data/mockProducts';
+import { ShoppingCart, Heart, Truck, RefreshCw, ShieldCheck, Star, MessageSquare } from 'lucide-react';
+import { useProduct } from '../hooks/useProduct';
+import Button from '../components/common/Button/Button';
+import styles from './ProductDetailPage.module.css';
 
-export const ProductDetailPage = () => {
+const ProductDetailPage = () => {
   const { id } = useParams();
-  const [quantity, setQuantity] = useState(1);
-  const product = MOCK_PRODUCTS.find((p) => p.id === id);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [isWishlist, setIsWishlist] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
 
-  if (!product) {
-    return (
-      <div style={{ padding: '3rem 0', textAlign: 'center' }}>
-        <h2>Producto no encontrado</h2>
-        <Link to="/products" style={{ color: 'var(--color-accent)', marginTop: '1rem', display: 'inline-block' }}>
-          &larr; Volver al catálogo
-        </Link>
-      </div>
-    );
-  }
+  const { product, loading, error } = useProduct(id);
+
+  const images = Array.isArray(product?.images) && product.images.length > 0
+    ? product.images
+    : ['https://via.placeholder.com/500x400?text=Sin+imagen'];
+
+  useEffect(() => {
+    if (images.length > 0) {
+      setSelectedImage(images[0]);
+    }
+  }, [product]);
+
+  const handleMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomPosition({ x, y });
+  };
+
+  if (loading) return <div className={styles.stateMessage}>Cargando detalle del producto...</div>;
+  if (error || !product) return <div className={styles.stateMessage}>Producto no encontrado.</div>;
+
+  const currentImg = selectedImage || images[0];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', padding: '2rem 0' }}>
-      <img src={product.imageUrl} alt={product.name} style={{ width: '100%', borderRadius: '8px', maxHeight: '400px', objectFit: 'cover' }} />
-      
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <span style={{ color: '#64748b', fontSize: '0.9rem', textTransform: 'uppercase' }}>{product.category}</span>
-        <h1 style={{ fontSize: '2.25rem', margin: '0.5rem 0 1rem 0' }}>{product.name}</h1>
-        <p style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '1.5rem' }}>${product.price.toFixed(2)}</p>
-        
-        {/* Selector de cantidad con useState */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-          <button 
-            onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-            style={{ padding: '0.5rem 1rem', fontSize: '1.2rem', cursor: 'pointer' }}
-          >-</button>
-          <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{quantity}</span>
-          <button 
-            onClick={() => setQuantity((prev) => prev + 1)}
-            style={{ padding: '0.5rem 1rem', fontSize: '1.2rem', cursor: 'pointer' }}
-          >+</button>
+    <div className={styles.container}>
+      {/* Navegación Breadcrumb */}
+      <nav className={styles.breadcrumb}>
+        <Link to="/products" className={styles.breadcrumbLink}>Catálogo</Link>
+        <span>/</span>
+        <span style={{ textTransform: 'capitalize' }}>{product.category?.toLowerCase()}</span>
+      </nav>
+
+      <div className={styles.grid}>
+        {/* Galería de Imágenes */}
+        <div>
+          <div
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onMouseMove={handleMouseMove}
+            className={styles.mainImageWrapper}
+          >
+            <img
+              src={currentImg}
+              alt={product.name}
+              className={styles.mainImage}
+              style={{
+                transition: isHovered ? 'none' : 'transform 0.3s ease',
+                transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                transform: isHovered ? 'scale(2)' : 'scale(1)',
+              }}
+            />
+          </div>
+
+          {images.length > 1 && (
+            <div className={styles.thumbnailList}>
+              {images.map((imgUrl, index) => (
+                <button
+                  key={index}
+                  onMouseEnter={() => setSelectedImage(imgUrl)}
+                  onClick={() => setSelectedImage(imgUrl)}
+                  className={`${styles.thumbnailBtn} ${currentImg === imgUrl ? styles.thumbnailBtnActive : ''}`}
+                >
+                  <img src={imgUrl} alt="" className={styles.thumbnailImg} />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <button style={{ backgroundColor: '#0f172a', color: 'white', padding: '1rem 2rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>
-          Añadir al Carrito ({quantity})
-        </button>
+        {/* Columna de Información */}
+        <div>
+          <h1 className={styles.productTitle}>{product.name}</h1>
 
-        <Link to="/products" style={{ marginTop: '1.5rem', color: '#64748b', fontSize: '0.9rem' }}>
-          &larr; Volver al catálogo
-        </Link>
+          {/* Valoraciones */}
+          <div className={styles.ratingWrapper}>
+            <span className={styles.ratingValue}>4.5</span>
+            <div style={{ display: 'flex', gap: '2px', color: '#f59e0b' }}>
+              <Star size={16} fill="#f59e0b" />
+              <Star size={16} fill="#f59e0b" />
+              <Star size={16} fill="#f59e0b" />
+              <Star size={16} fill="#f59e0b" />
+              <Star size={16} color="#cbd5e1" />
+            </div>
+            <span style={{ fontSize: '0.85rem', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <MessageSquare size={14} /> 10 opiniones
+            </span>
+          </div>
+
+          <p className={styles.categoryTag}>{product.category}</p>
+          <div className={styles.price}>{Number(product.price).toFixed(2)} €</div>
+
+          {/* Botones de Acción */}
+          <div className={styles.actionButtons}>
+            <Button variant="primary" style={{ borderRadius: '9999px', padding: '1rem' }}>
+              <ShoppingCart size={18} /> AÑADIR AL CARRITO
+            </Button>
+
+            <button
+              onClick={() => setIsWishlist(!isWishlist)}
+              className={`${styles.wishlistBtn} ${isWishlist ? styles.wishlistBtnActive : ''}`}
+            >
+              <Heart size={16} fill={isWishlist ? '#e11d48' : 'none'} />
+              {isWishlist ? 'EN TU LISTA DE DESEOS' : 'AÑADIR A LA LISTA DE DESEOS'}
+            </button>
+          </div>
+
+          {/* Bloque de Garantías */}
+          <div className={styles.guaranteesBox}>
+            <div className={styles.guaranteeItem}>
+              <Truck size={18} color="#0f172a" /> ENVÍO GRATUITO (DE 24 A 48 HORAS)
+            </div>
+            <div className={styles.guaranteeItem}>
+              <RefreshCw size={18} color="#0f172a" /> 30 DÍAS DE PRUEBA SIN COMPROMISO
+            </div>
+            <div className={styles.guaranteeItem}>
+              <ShieldCheck size={18} color="#0f172a" /> 3 AÑOS DE GARANTÍA OFICIAL
+            </div>
+          </div>
+
+          {/* Descripción */}
+          <p className={styles.description}>{product.description}</p>
+        </div>
       </div>
     </div>
   );
 };
+
+export default ProductDetailPage;

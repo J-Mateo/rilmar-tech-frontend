@@ -1,20 +1,21 @@
-import { ProductCard } from './ProductCard';
+import ProductCard from './ProductCard';
+import styles from './ProductGrid.module.css';
 
-export const ProductGrid = ({ products = [] }) => {
+const ProductGrid = ({ products = [] }) => {
   if (!products.length) {
-    return <p>No hay productos disponibles.</p>;
+    return <p className={styles.empty}>No hay productos disponibles.</p>;
   }
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-      gap: '1.5rem',
-      marginTop: '1rem'
-    }}>
+    <div className={styles.grid}>
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard
+          key={product.id}
+          product={product}
+        />
       ))}
     </div>
   );
 };
+
+export default ProductGrid;
