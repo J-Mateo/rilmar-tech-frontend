@@ -1,44 +1,104 @@
-import { useState, useEffect, useCallback } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+
 import { getProducts } from '../api/products.api';
 
 export const useProducts = (params = {}) => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [state, setState] = useState({
+    products: [],
+    loading: true,
+    error: null,
+  });
 
-  const fetchProducts = useCallback((signal) => {
-    setLoading(true);
-    setError(null);
+  const activeControllerRef = useRef(null);
+  const requestIdRef = useRef(0);
 
-    getProducts(params, { signal })
-      .then((data) => {
-        setProducts(data.data || data);
-      })
-      .catch((err) => {
-        if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
-          setError(err.message || 'Error al cargar los productos');
+  const executeRequest = useCallback(
+    async ({ signal, requestId }) => {
+      try {
+        const response = await getProducts(params, {
+          signal,
+        });
+
+        if (
+          signal.aborted ||
+          requestId !== requestIdRef.current
+        ) {
+          return;
         }
-      })
-      .finally(() => {
-        if (!signal?.aborted) {
-          setLoading(false);
+
+        setState({
+          products: Array.isArray(response.data)
+            ? response.data
+            : [],
+          loading: false,
+          error: null,
+        });
+      } catch (error) {
+        if (
+          error?.code === 'REQUEST_CANCELED' ||
+          signal.aborted ||
+          requestId !== requestIdRef.current
+        ) {
+          return;
         }
-      });
-  }, [params]);
+
+        setState({
+          products: [],
+          loading: false,
+          error:
+            error?.message ||
+            'No se han podido cargar los productos',
+        });
+      }
+    },
+    [params]
+  );
+
+  const fetchProducts = useCallback(() => {
+    activeControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    const requestId = ++requestIdRef.current;
+
+    activeControllerRef.current = controller;
+
+    executeRequest({
+      signal: controller.signal,
+      requestId,
+    });
+  }, [executeRequest]);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchProducts(controller.signal);
+    const requestId = ++requestIdRef.current;
 
-    return () => controller.abort();
-  }, [fetchProducts]);
+    activeControllerRef.current = controller;
+
+    executeRequest({
+      signal: controller.signal,
+      requestId,
+    });
+
+    return () => {
+      controller.abort();
+    };
+  }, [executeRequest]);
 
   const refetch = useCallback(() => {
-    const controller = new AbortController();
-    fetchProducts(controller.signal);
+    fetchProducts();
   }, [fetchProducts]);
 
-  return { products, loading, error, refetch };
+  return {
+    products: state.products,
+    loading: state.loading,
+    error: state.error,
+    refetch,
+  };
 };
 
 export default useProducts;

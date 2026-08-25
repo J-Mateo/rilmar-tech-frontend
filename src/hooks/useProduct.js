@@ -1,38 +1,68 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getProductById } from '../api/products.api';
 
 export const useProduct = (id) => {
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [state, setState] = useState({
+    product: null,
+    loading: Boolean(id),
+    error: id ? null : 'Identificador de producto no válido',
+  });
+
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      return undefined;
+    }
 
     const controller = new AbortController();
+    const requestId = ++requestIdRef.current;
 
-    setLoading(true);
-    setError(null);
+    const fetchProduct = async () => {
+      try {
+        const response = await getProductById(id, {
+          signal: controller.signal,
+        });
 
-    getProductById(id, { signal: controller.signal })
-      .then((data) => {
-        setProduct(data.data || data);
-      })
-      .catch((err) => {
-        if (err.name !== 'CanceledError') {
-          setError(err.message || 'Error al cargar el producto');
+        if (
+          controller.signal.aborted ||
+          requestId !== requestIdRef.current
+        ) {
+          return;
         }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      });
 
-    return () => controller.abort();
+        setState({
+          product: response.data ?? null,
+          loading: false,
+          error: null,
+        });
+      } catch (error) {
+        if (
+          error?.code === 'REQUEST_CANCELED' ||
+          controller.signal.aborted ||
+          requestId !== requestIdRef.current
+        ) {
+          return;
+        }
+
+        setState({
+          product: null,
+          loading: false,
+          error:
+            error?.message ||
+            'No se ha podido cargar el producto',
+        });
+      }
+    };
+
+    fetchProduct();
+
+    return () => {
+      controller.abort();
+    };
   }, [id]);
 
-  return { product, loading, error };
+  return state;
 };
 
 export default useProduct;

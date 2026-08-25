@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '../api/auth.api';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser, clearAuthError } from '../store/slices/authSlice';
 import FormInput from '../components/common/FormInput/FormInput';
 import Button from '../components/common/Button/Button';
 
 const LoginPage = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const emailInputRef = useRef(null);
+
+  const { loading, error: apiError } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -14,12 +18,11 @@ const LoginPage = () => {
   });
 
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState(null);
 
   useEffect(() => {
     emailInputRef.current?.focus();
-  }, []);
+    dispatch(clearAuthError());
+  }, [dispatch]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,18 +50,12 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setApiError(null);
 
     if (!validate()) return;
 
-    setLoading(true);
-    try {
-      await login(formData);
+    const resultAction = await dispatch(loginUser(formData));
+    if (loginUser.fulfilled.match(resultAction)) {
       navigate('/products');
-    } catch (err) {
-      setApiError(err.message || 'Credenciales incorrectas');
-    } finally {
-      setLoading(false);
     }
   };
 

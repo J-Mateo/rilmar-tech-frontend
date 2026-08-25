@@ -1,34 +1,120 @@
-import { useState, useEffect, useCallback } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+
 import { getReviewsByProductId } from '../api/reviews.api';
 
 export const useReviews = (productId) => {
-    const [reviews, setReviews] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [state, setState] = useState({
+    reviews: [],
+    loading: Boolean(productId),
+    error: null,
+  });
 
-    const fetchReviews = useCallback(async (signal) => {
-        if (!productId) return;
+  const activeControllerRef = useRef(null);
+  const requestIdRef = useRef(0);
 
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await getReviewsByProductId(productId, { signal });
-            setReviews(response.data || response);
-        } catch (err) {
-            if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
-                setError(err.message || 'Error al cargar las reseñas');
-            }
-        } finally {
-            setLoading(false);
+  const executeRequest = useCallback(
+    async ({ signal, requestId }) => {
+      if (!productId) {
+        return;
+      }
+
+      try {
+        const response =
+          await getReviewsByProductId(
+            productId,
+            { signal }
+          );
+
+        if (
+          signal.aborted ||
+          requestId !== requestIdRef.current
+        ) {
+          return;
         }
-    }, [productId]);
 
-    useEffect(() => {
-        const controller = new AbortController();
-        fetchReviews(controller.signal);
+        const reviews = Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response)
+            ? response
+            : [];
 
-        return () => controller.abort();
-    }, [fetchReviews]);
+        setState({
+          reviews,
+          loading: false,
+          error: null,
+        });
+      } catch (error) {
+        if (
+          error?.code === 'REQUEST_CANCELED' ||
+          error?.name === 'CanceledError' ||
+          error?.name === 'AbortError' ||
+          signal.aborted ||
+          requestId !== requestIdRef.current
+        ) {
+          return;
+        }
 
-    return { reviews, loading, error, refetch: fetchReviews };
+        setState({
+          reviews: [],
+          loading: false,
+          error:
+            error?.message ||
+            'No se han podido cargar las reseñas',
+        });
+      }
+    },
+    [productId]
+  );
+
+  const fetchReviews = useCallback(() => {
+    if (!productId) {
+      return;
+    }
+
+    activeControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    const requestId = ++requestIdRef.current;
+
+    activeControllerRef.current = controller;
+
+    executeRequest({
+      signal: controller.signal,
+      requestId,
+    });
+  }, [executeRequest, productId]);
+
+  useEffect(() => {
+    if (!productId) {
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const requestId = ++requestIdRef.current;
+
+    activeControllerRef.current = controller;
+
+    executeRequest({
+      signal: controller.signal,
+      requestId,
+    });
+
+    return () => {
+      controller.abort();
+    };
+  }, [executeRequest, productId]);
+
+  return {
+    reviews: state.reviews,
+    loading: state.loading,
+    error: state.error,
+    refetch: fetchReviews,
+  };
 };
+
+export default useReviews;
