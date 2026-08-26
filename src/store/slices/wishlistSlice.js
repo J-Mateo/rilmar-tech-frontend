@@ -8,6 +8,8 @@ import {
   toggleWishlistProductApi,
 } from '../../api/wishlist.api';
 
+import { logoutUser } from './authSlice';
+
 export const fetchWishlist = createAsyncThunk(
   'wishlist/fetchWishlist',
   async (_, { rejectWithValue }) => {
@@ -25,7 +27,8 @@ export const toggleWishlistProduct = createAsyncThunk(
   'wishlist/toggleWishlistProduct',
   async (productId, { rejectWithValue }) => {
     try {
-      const response = await toggleWishlistProductApi(productId);
+      const response =
+        await toggleWishlistProductApi(productId);
 
       return response.data;
     } catch (error) {
@@ -41,17 +44,17 @@ const initialState = {
   error: null,
 };
 
+const createInitialState = () => ({
+  ...initialState,
+  productIds: [],
+});
+
 const wishlistSlice = createSlice({
   name: 'wishlist',
   initialState,
 
   reducers: {
-    clearWishlist: (state) => {
-      state.productIds = [];
-      state.loading = false;
-      state.initialized = false;
-      state.error = null;
-    },
+    clearWishlist: () => createInitialState(),
 
     clearWishlistError: (state) => {
       state.error = null;
@@ -68,7 +71,10 @@ const wishlistSlice = createSlice({
       .addCase(fetchWishlist.fulfilled, (state, action) => {
         state.loading = false;
         state.initialized = true;
-        state.productIds = Array.isArray(action.payload?.productIds)
+
+        state.productIds = Array.isArray(
+          action.payload?.productIds
+        )
           ? action.payload.productIds.map(String)
           : [];
       })
@@ -76,6 +82,7 @@ const wishlistSlice = createSlice({
       .addCase(fetchWishlist.rejected, (state, action) => {
         state.loading = false;
         state.initialized = true;
+
         state.error =
           action.payload?.message ||
           'No se ha podido cargar la lista de deseos';
@@ -86,20 +93,35 @@ const wishlistSlice = createSlice({
         state.error = null;
       })
 
-      .addCase(toggleWishlistProduct.fulfilled, (state, action) => {
-        state.loading = false;
-        state.initialized = true;
-        state.productIds = Array.isArray(action.payload?.productIds)
-          ? action.payload.productIds.map(String)
-          : [];
-      })
+      .addCase(
+        toggleWishlistProduct.fulfilled,
+        (state, action) => {
+          state.loading = false;
+          state.initialized = true;
 
-      .addCase(toggleWishlistProduct.rejected, (state, action) => {
-        state.loading = false;
-        state.error =
-          action.payload?.message ||
-          'No se ha podido actualizar la lista de deseos';
-      });
+          state.productIds = Array.isArray(
+            action.payload?.productIds
+          )
+            ? action.payload.productIds.map(String)
+            : [];
+        }
+      )
+
+      .addCase(
+        toggleWishlistProduct.rejected,
+        (state, action) => {
+          state.loading = false;
+
+          state.error =
+            action.payload?.message ||
+            'No se ha podido actualizar la lista de deseos';
+        }
+      )
+
+      .addCase(
+        logoutUser.fulfilled,
+        () => createInitialState()
+      );
   },
 });
 

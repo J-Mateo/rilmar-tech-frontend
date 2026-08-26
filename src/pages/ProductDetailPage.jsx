@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Heart,
@@ -12,6 +16,10 @@ import {
 } from 'lucide-react';
 
 import { useProduct } from '../hooks/useProduct';
+import {
+  addCartItem,
+  selectCartMutationLoading,
+} from '../store/slices/cartSlice';
 import { toggleWishlistProduct } from '../store/slices/wishlistSlice';
 import Button from '../components/common/Button/Button';
 import styles from './ProductDetailPage.module.css';
@@ -22,6 +30,7 @@ const FALLBACK_IMAGE =
 const ProductDetailPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [selectedImage, setSelectedImage] = useState('');
   const [zoomPosition, setZoomPosition] = useState({
@@ -40,6 +49,10 @@ const ProductDetailPage = () => {
     productIds,
     togglingProductId,
   } = useSelector((state) => state.wishlist);
+
+  const cartMutationLoading = useSelector(
+    selectCartMutationLoading
+  );
 
   if (loading) {
     return (
@@ -70,8 +83,14 @@ const ProductDetailPage = () => {
       : images[0];
 
   const isWishlist = productIds.includes(productId);
+
   const isTogglingWishlist =
     String(togglingProductId) === productId;
+
+  const isOutOfStock =
+    product.stock !== null &&
+    product.stock !== undefined &&
+    Number(product.stock) <= 0;
 
   const handleMouseMove = (event) => {
     const {
@@ -88,6 +107,28 @@ const ProductDetailPage = () => {
       ((event.clientY - top) / height) * 100;
 
     setZoomPosition({ x, y });
+  };
+
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    if (cartMutationLoading || isOutOfStock) {
+      return;
+    }
+
+    try {
+      await dispatch(
+        addCartItem({
+          productId: product.id,
+          quantity: 1,
+        })
+      ).unwrap();
+    } catch {
+      return;
+    }
   };
 
   const handleWishlist = async () => {
@@ -125,9 +166,13 @@ const ProductDetailPage = () => {
       </nav>
 
       <div className={styles.grid}>
-        <section aria-label={`Imágenes de ${product.name}`}>
+        <section
+          className={styles.galleryColumn}
+          aria-label={`Imágenes de ${product.name}`}
+        >
           <div
-            className={styles.mainImageWrapper}
+            className={`${styles.mainImageWrapper} ${isHovered ? styles.mainImageWrapperZoomed : ''
+              }`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             onMouseMove={handleMouseMove}
@@ -135,15 +180,10 @@ const ProductDetailPage = () => {
             <img
               src={currentImage}
               alt={product.name}
-              className={styles.mainImage}
+              className={`${styles.mainImage} ${isHovered ? styles.mainImageZoomed : ''
+                }`}
               style={{
-                transition: isHovered
-                  ? 'none'
-                  : 'transform 0.3s ease',
                 transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                transform: isHovered
-                  ? 'scale(2)'
-                  : 'scale(1)',
               }}
             />
           </div>
@@ -167,11 +207,10 @@ const ProductDetailPage = () => {
                     onClick={() =>
                       setSelectedImage(imageUrl)
                     }
-                    className={`${styles.thumbnailBtn} ${
-                      isActive
+                    className={`${styles.thumbnailBtn} ${isActive
                         ? styles.thumbnailBtnActive
                         : ''
-                    }`}
+                      }`}
                     aria-label={`Ver imagen ${index + 1} de ${product.name}`}
                     aria-pressed={isActive}
                   >
@@ -187,7 +226,7 @@ const ProductDetailPage = () => {
           )}
         </section>
 
-        <section>
+        <section className={styles.infoColumn}>
           <h1 className={styles.productTitle}>
             {product.name}
           </h1>
@@ -198,29 +237,20 @@ const ProductDetailPage = () => {
             </span>
 
             <div
-              style={{
-                display: 'flex',
-                gap: '2px',
-                color: '#f59e0b',
-              }}
+              className={styles.stars}
               aria-label="Valoración de 4.5 sobre 5"
             >
-              <Star size={16} fill="#f59e0b" />
-              <Star size={16} fill="#f59e0b" />
-              <Star size={16} fill="#f59e0b" />
-              <Star size={16} fill="#f59e0b" />
-              <Star size={16} color="#cbd5e1" />
+              <Star size={16} fill="currentColor" />
+              <Star size={16} fill="currentColor" />
+              <Star size={16} fill="currentColor" />
+              <Star size={16} fill="currentColor" />
+              <Star
+                size={16}
+                className={styles.inactiveStar}
+              />
             </div>
 
-            <span
-              style={{
-                fontSize: '0.85rem',
-                color: '#64748b',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
+            <span className={styles.reviewCount}>
               <MessageSquare size={14} />
               10 opiniones
             </span>
@@ -236,14 +266,28 @@ const ProductDetailPage = () => {
             {Number(product.price).toFixed(2)} €
           </div>
 
+          <div className={styles.stockStatus}>
+            {isOutOfStock ? (
+              <span className={styles.outOfStock}>
+                Sin stock
+              </span>
+            ) : (
+              <span className={styles.inStock}>
+                Disponible
+              </span>
+            )}
+          </div>
+
           <div className={styles.actionButtons}>
             <Button
               type="button"
               variant="primary"
-              style={{
-                borderRadius: '9999px',
-                padding: '1rem',
-              }}
+              className={styles.primaryAction}
+              onClick={handleAddToCart}
+              disabled={
+                cartMutationLoading || isOutOfStock
+              }
+              isLoading={cartMutationLoading}
             >
               <ShoppingCart size={18} />
               AÑADIR AL CARRITO
@@ -254,11 +298,10 @@ const ProductDetailPage = () => {
                 type="button"
                 onClick={handleWishlist}
                 disabled={isTogglingWishlist}
-                className={`${styles.wishlistBtn} ${
-                  isWishlist
+                className={`${styles.wishlistBtn} ${isWishlist
                     ? styles.wishlistBtnActive
                     : ''
-                }`}
+                  }`}
                 aria-pressed={isWishlist}
               >
                 <Heart

@@ -1,7 +1,11 @@
+import styles from './CheckoutPage.module.css';
+
 const CheckoutPage = () => {
   return (
-    <main style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 1rem' }}>
-      <h1>Proceso de Pago</h1>
+    <main className={styles.page}>
+      <h1 className={styles.title}>
+        Proceso de Pago
+      </h1>
     </main>
   );
 };

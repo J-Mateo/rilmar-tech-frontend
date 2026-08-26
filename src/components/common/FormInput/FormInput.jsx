@@ -1,37 +1,77 @@
 import { forwardRef } from 'react';
 
-const FormInput = forwardRef(({ label, name, type = 'text', value, onChange, error, placeholder, required = false, autoComplete }, ref) => {
+import styles from './FormInput.module.css';
+
+const FormInput = forwardRef(
+  (
+    {
+      label,
+      name,
+      type = 'text',
+      value,
+      onChange,
+      error,
+      placeholder,
+      required = false,
+      autoComplete,
+    },
+    ref
+  ) => {
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            {label && (
-                <label htmlFor={name} style={{ fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>
-                    {label} {required && <span style={{ color: '#dc2626' }}>*</span>}
-                </label>
+      <div className={styles.field}>
+        {label && (
+          <label
+            htmlFor={name}
+            className={styles.label}
+          >
+            {label}
+
+            {required && (
+              <>
+                {' '}
+                <span
+                  className={styles.required}
+                  aria-hidden="true"
+                >
+                  *
+                </span>
+              </>
             )}
-            <input
-                ref={ref}
-                id={name}
-                name={name}
-                type={type}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                required={required}
-                autoComplete={autoComplete}
-                style={{
-                    padding: '0.75rem',
-                    borderRadius: '6px',
-                    border: error ? '1px solid #dc2626' : '1px solid #cbd5e1',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                    backgroundColor: '#ffffff',
-                    transition: 'border-color 0.2s',
-                }}
-            />
-            {error && <span style={{ fontSize: '0.75rem', color: '#dc2626' }}>{error}</span>}
-        </div>
+          </label>
+        )}
+
+        <input
+          ref={ref}
+          id={name}
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required={required}
+          autoComplete={autoComplete}
+          aria-invalid={Boolean(error)}
+          aria-describedby={
+            error ? `${name}-error` : undefined
+          }
+          className={`${styles.input} ${
+            error ? styles.inputError : ''
+          }`}
+        />
+
+        {error && (
+          <span
+            id={`${name}-error`}
+            className={styles.error}
+            role="alert"
+          >
+            {error}
+          </span>
+        )}
+      </div>
     );
-});
+  }
+);
 
 FormInput.displayName = 'FormInput';
 

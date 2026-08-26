@@ -1,7 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
 import { useProducts } from '../hooks/useProducts';
 import ProductGrid from '../components/product/ProductGrid';
 import Button from '../components/common/Button/Button';
+import styles from './ProductsPage.module.css';
 
 const CATEGORY_LABELS = {
   Productividad: 'Productividad',
@@ -15,7 +21,8 @@ const CATEGORIES = Object.keys(CATEGORY_LABELS);
 
 const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] =
+    useState('');
   const [category, setCategory] = useState('');
 
   useEffect(() => {
@@ -28,77 +35,102 @@ const ProductsPage = () => {
 
   const queryParams = useMemo(() => {
     const params = {};
-    if (category) params.category = category;
-    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+
+    if (category) {
+      params.category = category;
+    }
+
+    if (debouncedSearch.trim()) {
+      params.search = debouncedSearch.trim();
+    }
+
     return params;
   }, [category, debouncedSearch]);
 
-  const { products = [], loading, error, refetch } = useProducts(queryParams);
+  const {
+    products = [],
+    loading,
+    error,
+    refetch,
+  } = useProducts(queryParams);
 
   return (
-    <main style={{ padding: '2rem 1rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+    <main className={styles.page}>
+      <div
+        className={styles.filterBar}
+        role="search"
+        aria-label="Filtros de productos"
+      >
         <input
           type="search"
           placeholder="Buscar productos..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            padding: '0.75rem 1rem',
-            flex: '1',
-            minWidth: '240px',
-            borderRadius: '6px',
-            border: '1px solid #cbd5e1',
-            fontSize: '0.9rem',
-            outline: 'none',
-          }}
+          onChange={(event) =>
+            setSearchTerm(event.target.value)
+          }
+          className={styles.searchInput}
+          aria-label="Buscar productos"
         />
 
         <select
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          style={{
-            padding: '0.75rem 1rem',
-            borderRadius: '6px',
-            border: '1px solid #cbd5e1',
-            fontSize: '0.9rem',
-            backgroundColor: '#ffffff',
-            cursor: 'pointer',
-          }}
+          onChange={(event) =>
+            setCategory(event.target.value)
+          }
+          className={styles.categorySelect}
+          aria-label="Filtrar por categoría"
         >
-          <option value="">Todas las categorías</option>
-          {CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>
-              {CATEGORY_LABELS[cat]}
+          <option value="">
+            Todas las categorías
+          </option>
+
+          {CATEGORIES.map((currentCategory) => (
+            <option
+              key={currentCategory}
+              value={currentCategory}
+            >
+              {CATEGORY_LABELS[currentCategory]}
             </option>
           ))}
         </select>
       </div>
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#64748b' }}>
-          <p>Cargando catálogo de productos...</p>
+        <div className={styles.state}>
+          <p>
+            Cargando catálogo de productos...
+          </p>
         </div>
       )}
 
       {error && (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-          <p style={{ color: '#ef4444', marginBottom: '1.25rem', fontWeight: '500' }}>{error}</p>
-          <Button onClick={refetch} variant="primary">
+        <div className={styles.errorState}>
+          <p className={styles.errorMessage}>
+            {error}
+          </p>
+
+          <Button
+            onClick={refetch}
+            variant="primary"
+          >
             Reintentar
           </Button>
         </div>
       )}
 
-      {!loading && !error && products.length === 0 && (
-        <p style={{ textAlign: 'center', padding: '4rem 2rem', color: '#64748b' }}>
-          No se encontraron productos.
-        </p>
-      )}
+      {!loading &&
+        !error &&
+        products.length === 0 && (
+          <p className={styles.emptyState}>
+            No se encontraron productos.
+          </p>
+        )}
 
-      {!loading && !error && products.length > 0 && (
-        <ProductGrid products={products} />
-      )}
+      {!loading &&
+        !error &&
+        products.length > 0 && (
+          <ProductGrid products={products} />
+        )}
     </main>
   );
 };

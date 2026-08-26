@@ -1,0 +1,48 @@
+.page {
+  width: min(100% - 2rem, 1200px);
+  min-height: 60vh;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.code {
+  margin: 0 0 1rem;
+  color: #0f172a;
+  font-size: clamp(4rem, 12vw, 7rem);
+  line-height: 1;
+}
+
+.message {
+  margin: 0 0 2rem;
+  color: #64748b;
+  font-size: 1.2rem;
+}
+
+.homeLink {
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  background-color: #0f172a;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.homeLink:hover {
+  background-color: #1e293b;
+}
+
+.homeLink:focus-visible {
+  outline: 3px solid rgba(15, 23, 42, 0.25);
+  outline-offset: 3px;
+}

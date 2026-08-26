@@ -1,20 +1,4 @@
-const VARIANT_STYLES = {
-    primary: {
-        backgroundColor: '#000000',
-        color: '#ffffff',
-        border: '1px solid #000000',
-    },
-    secondary: {
-        backgroundColor: '#f1f5f9',
-        color: '#0f172a',
-        border: '1px solid #cbd5e1',
-    },
-    danger: {
-        backgroundColor: '#ef4444',
-        color: '#ffffff',
-        border: '1px solid #ef4444',
-    },
-};
+import styles from './Button.module.css';
 
 const Button = ({
     children,
@@ -23,31 +7,18 @@ const Button = ({
     isLoading = false,
     disabled = false,
     onClick,
-    style,
+    className = '',
     ...props
 }) => {
-    const selectedStyle = VARIANT_STYLES[variant] || VARIANT_STYLES.primary;
+    const variantClass =
+        styles[variant] || styles.primary;
 
     return (
         <button
             type={type}
             disabled={disabled || isLoading}
             onClick={onClick}
-            style={{
-                padding: '0.75rem 1.25rem',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                cursor: disabled || isLoading ? 'not-allowed' : 'pointer',
-                opacity: disabled || isLoading ? 0.6 : 1,
-                transition: 'all 0.2s ease',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                ...selectedStyle,
-                ...style,
-            }}
+            className={`${styles.button} ${variantClass} ${className}`.trim()}
             {...props}
         >
             {isLoading ? 'Cargando...' : children}

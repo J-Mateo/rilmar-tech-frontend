@@ -1,7 +1,11 @@
+import styles from './CheckoutSuccessPage.module.css';
+
 const CheckoutSuccessPage = () => {
   return (
-    <main style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 1rem', textAlign: 'center' }}>
-      <h1>¡Compra realizada con éxito!</h1>
+    <main className={styles.page}>
+      <h1 className={styles.title}>
+        ¡Compra realizada con éxito!
+      </h1>
     </main>
   );
 };

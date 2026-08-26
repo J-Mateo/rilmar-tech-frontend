@@ -1,65 +1,118 @@
-.container {
-  max-width: 1000px;
+.page {
+  width: min(100% - 2rem, 1200px);
   margin: 0 auto;
-  padding: 2rem 0;
-}
-
-.title {
-  margin-bottom: 1.5rem;
-  font-size: 2rem;
-  font-weight: 700;
+  padding: 2rem 0 4rem;
 }
 
 .filterBar {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
 }
 
 .searchInput {
-  width: 100%;
+  flex: 1;
+  min-width: 240px;
   padding: 0.75rem 1rem;
-  border-radius: var(--radius-sm, 6px);
-  border: 1px solid var(--color-border, #cbd5e1);
-  font-size: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.categoryGroup {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+.searchInput::placeholder {
+  color: #94a3b8;
 }
 
-.categoryBtn {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  border: 1px solid var(--color-border, #cbd5e1);
-  background-color: var(--color-surface, #ffffff);
-  color: var(--color-text-main, #0f172a);
-  font-size: 0.875rem;
+.searchInput:hover {
+  border-color: #94a3b8;
+}
+
+.searchInput:focus {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+.categorySelect {
+  min-width: 200px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.categoryBtn:hover {
-  background-color: var(--color-bg, #f8fafc);
+.categorySelect:hover {
+  border-color: #94a3b8;
 }
 
-.categoryBtnActive {
-  background-color: var(--color-accent, #0f172a);
-  color: #ffffff;
-  border-color: var(--color-accent, #0f172a);
+.categorySelect:focus {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
 
-@media (min-width: 640px) {
-  .filterBar {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+.state {
+  padding: 4rem 2rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.state p {
+  margin: 0;
+}
+
+.errorState {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.errorMessage {
+  margin: 0 0 1.25rem;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.emptyState {
+  margin: 0;
+  padding: 4rem 2rem;
+  color: #64748b;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .page {
+    width: min(100% - 1.25rem, 1200px);
+    padding-top: 1.5rem;
   }
 
-  .searchInput {
-    max-width: 400px;
+  .filterBar {
+    flex-direction: column;
+  }
+
+  .searchInput,
+  .categorySelect {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .state,
+  .errorState,
+  .emptyState {
+    padding: 3rem 1rem;
   }
 }

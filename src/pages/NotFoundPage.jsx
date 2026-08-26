@@ -1,25 +1,25 @@
 import { Link } from 'react-router-dom';
 
+import styles from './NotFoundPage.module.css';
+
 const NotFoundPage = () => {
   return (
-    <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-      <h1 style={{ fontSize: '4rem', marginBottom: '1rem' }}>404</h1>
-      <p style={{ fontSize: '1.2rem', color: '#64748b', marginBottom: '2rem' }}>
+    <main className={styles.page}>
+      <h1 className={styles.code}>
+        404
+      </h1>
+
+      <p className={styles.message}>
         Página no encontrada
       </p>
+
       <Link
         to="/"
-        style={{
-          backgroundColor: '#0f172a',
-          color: 'white',
-          padding: '0.75rem 1.5rem',
-          borderRadius: '4px',
-          textDecoration: 'none',
-        }}
+        className={styles.homeLink}
       >
         Volver al inicio
       </Link>
-    </div>
+    </main>
   );
 };
 

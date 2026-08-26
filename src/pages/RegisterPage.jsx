@@ -1,28 +1,14 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useRef, useState, } from 'react';
+import { Link, useNavigate, } from 'react-router-dom';
+import { useDispatch, useSelector,} from 'react-redux';
 
-import {
-  Link,
-  useNavigate,
-} from 'react-router-dom';
-
-import {
-  useDispatch,
-  useSelector,
-} from 'react-redux';
-
-import {
-  clearAuthError,
-  registerUser,
-} from '../store/slices/authSlice';
-
+import { clearAuthError, registerUser, } from '../store/slices/authSlice';
 import FormInput from '../components/common/FormInput/FormInput';
 import Button from '../components/common/Button/Button';
+import styles from './RegisterPage.module.css';
 
-const EMAIL_PATTERN = /\S+@\S+\.\S+/;
+const EMAIL_PATTERN =
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const RegisterPage = () => {
   const dispatch = useDispatch();
@@ -67,7 +53,9 @@ const RegisterPage = () => {
   const validate = () => {
     const validationErrors = {};
 
-    const normalizedName = formData.name.trim();
+    const normalizedName =
+      formData.name.trim();
+
     const normalizedEmail =
       formData.email.trim();
 
@@ -141,59 +129,20 @@ const RegisterPage = () => {
   };
 
   return (
-    <main
-      style={{
-        maxWidth: '440px',
-        margin: '3rem auto',
-        padding: '2rem 1rem',
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          padding: '2rem',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          boxShadow:
-            '0 4px 6px -1px rgba(0,0,0,0.05)',
-        }}
-      >
-        <h1
-          style={{
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            marginBottom: '0.5rem',
-            color: '#0f172a',
-            textAlign: 'center',
-          }}
-        >
+    <main className={styles.page}>
+      <section className={styles.card}>
+        <h1 className={styles.title}>
           Crear Cuenta
         </h1>
 
-        <p
-          style={{
-            fontSize: '0.875rem',
-            color: '#64748b',
-            textAlign: 'center',
-            marginBottom: '1.5rem',
-          }}
-        >
+        <p className={styles.subtitle}>
           Regístrate para comenzar tus compras
         </p>
 
         {apiError && (
           <div
+            className={styles.apiError}
             role="alert"
-            style={{
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#dc2626',
-              padding: '0.75rem',
-              borderRadius: '6px',
-              fontSize: '0.85rem',
-              marginBottom: '1.25rem',
-              textAlign: 'center',
-            }}
           >
             {apiError}
           </div>
@@ -202,11 +151,7 @@ const RegisterPage = () => {
         <form
           onSubmit={handleSubmit}
           noValidate
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem',
-          }}
+          className={styles.form}
         >
           <FormInput
             ref={nameInputRef}
@@ -262,37 +207,22 @@ const RegisterPage = () => {
             variant="primary"
             isLoading={loading}
             disabled={loading}
-            style={{
-              marginTop: '0.5rem',
-              width: '100%',
-            }}
+            className={styles.submitButton}
           >
             Registrarse
           </Button>
         </form>
 
-        <p
-          style={{
-            marginTop: '1.5rem',
-            fontSize: '0.85rem',
-            color: '#64748b',
-            textAlign: 'center',
-          }}
-        >
+        <p className={styles.authFooter}>
           ¿Ya tienes cuenta?{' '}
-
           <Link
             to="/login"
-            style={{
-              color: '#000000',
-              fontWeight: '600',
-              textDecoration: 'none',
-            }}
+            className={styles.authLink}
           >
             Inicia sesión
           </Link>
         </p>
-      </div>
+      </section>
     </main>
   );
 };

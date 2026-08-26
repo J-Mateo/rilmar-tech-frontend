@@ -57,8 +57,13 @@
   height: 100%;
   display: block;
   object-fit: contain;
-  transition: transform 0.25s ease;
+  transition: transform 0.3s ease;
   will-change: transform;
+}
+
+.mainImageZoomed {
+  transform: scale(2);
+  transition: none;
 }
 
 .thumbnailList {

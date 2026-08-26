@@ -1,24 +1,30 @@
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { checkAuth } from '../../../store/slices/authSlice';
-import { fetchWishlist } from '../../../store/slices/wishlistSlice';
 import App from '../../../App.jsx';
+import { checkAuth } from '../../../store/slices/authSlice';
+import { fetchCart } from '../../../store/slices/cartSlice';
+import { fetchWishlist } from '../../../store/slices/wishlistSlice';
 
 const AppInitializer = () => {
   const dispatch = useDispatch();
 
+  const { isAuthenticated, isCheckingAuth } = useSelector(
+    (state) => state.auth
+  );
+
   useEffect(() => {
-    const initializeApp = async () => {
-      const authResult = await dispatch(checkAuth());
-
-      if (checkAuth.fulfilled.match(authResult)) {
-        await dispatch(fetchWishlist());
-      }
-    };
-
-    initializeApp();
+    dispatch(checkAuth());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (isCheckingAuth || !isAuthenticated) {
+      return;
+    }
+
+    dispatch(fetchCart());
+    dispatch(fetchWishlist());
+  }, [dispatch, isAuthenticated, isCheckingAuth]);
 
   return <App />;
 };

@@ -1,16 +1,24 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, clearAuthError } from '../store/slices/authSlice';
+import { useEffect, useRef, useState, } from 'react';
+import { Link, useNavigate, } from 'react-router-dom';
+import { useDispatch, useSelector,} from 'react-redux';
+
+import { clearAuthError, loginUser, } from '../store/slices/authSlice';
 import FormInput from '../components/common/FormInput/FormInput';
 import Button from '../components/common/Button/Button';
+import styles from './LoginPage.module.css';
+
+const EMAIL_PATTERN =
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const emailInputRef = useRef(null);
 
-  const { loading, error: apiError } = useSelector((state) => state.auth);
+  const {
+    loading,
+    error: apiError,
+  } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -24,58 +32,101 @@ const LoginPage = () => {
     dispatch(clearAuthError());
   }, [dispatch]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
+
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
+      setErrors((current) => ({
+        ...current,
+        [name]: null,
+      }));
     }
   };
 
   const validate = () => {
-    const newErrors = {};
-    if (!formData.email.trim()) {
-      newErrors.email = 'El correo electrónico es obligatorio';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Introduce un correo válido';
+    const validationErrors = {};
+    const normalizedEmail =
+      formData.email.trim();
+
+    if (!normalizedEmail) {
+      validationErrors.email =
+        'El correo electrónico es obligatorio';
+    } else if (
+      !EMAIL_PATTERN.test(normalizedEmail)
+    ) {
+      validationErrors.email =
+        'Introduce un correo válido';
     }
 
     if (!formData.password) {
-      newErrors.password = 'La contraseña es obligatoria';
+      validationErrors.password =
+        'La contraseña es obligatoria';
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(validationErrors);
+
+    return (
+      Object.keys(validationErrors).length === 0
+    );
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-    if (!validate()) return;
+    if (!validate()) {
+      return;
+    }
 
-    const resultAction = await dispatch(loginUser(formData));
-    if (loginUser.fulfilled.match(resultAction)) {
-      navigate('/products');
+    const credentials = {
+      email: formData.email
+        .trim()
+        .toLowerCase(),
+      password: formData.password,
+    };
+
+    try {
+      await dispatch(
+        loginUser(credentials)
+      ).unwrap();
+
+      navigate('/products', {
+        replace: true,
+      });
+    } catch {
+      return;
     }
   };
 
   return (
-    <main style={{ maxWidth: '420px', margin: '3rem auto', padding: '2rem 1rem' }}>
-      <div style={{ backgroundColor: '#ffffff', padding: '2rem', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem', color: '#0f172a', textAlign: 'center' }}>
+    <main className={styles.page}>
+      <section className={styles.card}>
+        <h1 className={styles.title}>
           Iniciar Sesión
         </h1>
-        <p style={{ fontSize: '0.875rem', color: '#64748b', textAlign: 'center', marginBottom: '1.5rem' }}>
+
+        <p className={styles.subtitle}>
           Accede a tu cuenta para gestionar tus compras
         </p>
 
         {apiError && (
-          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1.25rem', textAlign: 'center' }}>
+          <div
+            className={styles.apiError}
+            role="alert"
+          >
             {apiError}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className={styles.form}
+        >
           <FormInput
             ref={emailInputRef}
             label="Correo electrónico"
@@ -85,6 +136,7 @@ const LoginPage = () => {
             onChange={handleChange}
             error={errors.email}
             placeholder="tu@email.com"
+            autoComplete="email"
             required
           />
 
@@ -96,21 +148,31 @@ const LoginPage = () => {
             onChange={handleChange}
             error={errors.password}
             placeholder="••••••••"
+            autoComplete="current-password"
             required
           />
 
-          <Button type="submit" variant="primary" isLoading={loading} style={{ marginTop: '0.5rem', width: '100%' }}>
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={loading}
+            disabled={loading}
+            className={styles.submitButton}
+          >
             Entrar
           </Button>
         </form>
 
-        <p style={{ marginTop: '1.5rem', fontSize: '0.85rem', color: '#64748b', textAlign: 'center' }}>
+        <p className={styles.authFooter}>
           ¿No tienes cuenta?{' '}
-          <Link to="/register" style={{ color: '#000000', fontWeight: '600', textDecoration: 'none' }}>
+          <Link
+            to="/register"
+            className={styles.authLink}
+          >
             Regístrate aquí
           </Link>
         </p>
-      </div>
+      </section>
     </main>
   );
 };
