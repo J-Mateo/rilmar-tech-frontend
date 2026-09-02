@@ -1,7 +1,24 @@
 .page {
   width: min(100% - 2rem, 1200px);
   margin: 0 auto;
-  padding: 2rem 0 4rem;
+  padding: 2.5rem 0 4rem;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .title {
@@ -9,11 +26,164 @@
   color: #0f172a;
   font-size: clamp(2rem, 4vw, 2.75rem);
   font-weight: 700;
+  line-height: 1.1;
+}
+
+.subtitle {
+  max-width: 620px;
+  margin: 0.75rem 0 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.headerIcon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: #fff1f2;
+  color: #e11d48;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.35rem;
+}
+
+.count {
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.empty,
+.state,
+.errorState {
+  min-height: 380px;
+  padding: 3rem 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 1.25rem;
+  border-radius: 50%;
+  background-color: #fff1f2;
+  color: #e11d48;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty h2 {
+  margin: 0 0 0.75rem;
+  color: #0f172a;
+  font-size: 1.5rem;
+}
+
+.empty p {
+  max-width: 480px;
+  margin: 0 0 1.5rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.state {
+  gap: 1rem;
+  color: #64748b;
+}
+
+.state p {
+  margin: 0;
+}
+
+.errorState {
+  gap: 1rem;
+}
+
+.stateTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.4rem;
+}
+
+.errorMessage {
+  max-width: 480px;
+  margin: 0;
+  color: #b91c1c;
+  line-height: 1.5;
+}
+
+.catalogLink {
+  min-height: 44px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px;
+  background-color: #0f172a;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.catalogLink:hover {
+  background-color: #1e293b;
+}
+
+.catalogLink:focus-visible {
+  outline: 3px solid rgba(15, 23, 42, 0.25);
+  outline-offset: 3px;
 }
 
 @media (max-width: 640px) {
   .page {
     width: min(100% - 1.25rem, 1200px);
     padding-top: 1.5rem;
+  }
+
+  .header {
+    margin-bottom: 2rem;
+  }
+
+  .headerIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .sectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .empty,
+  .state,
+  .errorState {
+    min-height: 320px;
+    padding: 2rem 1rem;
   }
 }

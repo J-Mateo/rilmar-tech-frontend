@@ -80,6 +80,15 @@ const authSlice = createSlice({
       state.error = null;
       state.errorCode = null;
     },
+
+    sessionExpired: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.isCheckingAuth = false;
+      state.loading = false;
+      state.error = null;
+      state.errorCode = null;
+    },
   },
 
   extraReducers: (builder) => {
@@ -133,9 +142,11 @@ const authSlice = createSlice({
 
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
+
         state.error =
           action.payload?.message ||
           'Error al iniciar sesión';
+
         state.errorCode =
           action.payload?.code ||
           'LOGIN_ERROR';
@@ -157,9 +168,11 @@ const authSlice = createSlice({
 
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
+
         state.error =
           action.payload?.message ||
           'Error al registrar usuario';
+
         state.errorCode =
           action.payload?.code ||
           'REGISTER_ERROR';
@@ -181,9 +194,11 @@ const authSlice = createSlice({
 
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
+
         state.error =
           action.payload?.message ||
           'Error al cerrar sesión';
+
         state.errorCode =
           action.payload?.code ||
           'LOGOUT_ERROR';
@@ -191,6 +206,9 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearAuthError } = authSlice.actions;
+export const {
+  clearAuthError,
+  sessionExpired,
+} = authSlice.actions;
 
 export default authSlice.reducer;

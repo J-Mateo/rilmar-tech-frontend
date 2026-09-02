@@ -1,12 +1,60 @@
 .page {
-  width: min(100% - 2rem, 1200px);
-  min-height: 55vh;
+  width: min(100% - 2rem, 900px);
   margin: 0 auto;
-  padding: 2rem 0 4rem;
+  padding: 3rem 0 5rem;
+}
+
+.successCard,
+.emptyState {
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background-color: #ffffff;
+}
+
+.successCard {
+  text-align: left;
+}
+
+.emptyState {
+  min-height: 50vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+}
+
+.iconWrapper,
+.iconWrapperSuccess {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 1.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconWrapper {
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.iconWrapperSuccess {
+  background-color: #ecfdf5;
+  color: #15803d;
+}
+
+.eyebrow {
+  margin: 0 0 0.4rem;
+  color: #15803d;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .title {
@@ -14,10 +62,196 @@
   color: #0f172a;
   font-size: clamp(2rem, 4vw, 2.75rem);
   font-weight: 700;
+  line-height: 1.15;
+}
+
+.message {
+  margin: 0.75rem 0 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.orderMeta {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.orderMeta > div {
+  padding: 1rem;
+  border-radius: 10px;
+  background-color: #f8fafc;
+}
+
+.metaLabel {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.metaValue {
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.divider {
+  height: 1px;
+  margin: 2rem 0;
+  background-color: #e2e8f0;
+}
+
+.sectionTitle {
+  margin: 0 0 1rem;
+  color: #0f172a;
+  font-size: 1.15rem;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.image {
+  width: 72px;
+  height: 72px;
+  display: block;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #f8fafc;
+}
+
+.itemInfo {
+  min-width: 0;
+}
+
+.productName {
+  margin: 0 0 0.35rem;
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.itemMeta {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.itemSubtotal {
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.totalRow strong {
+  font-size: 1.35rem;
+}
+
+.actions {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.primaryLink,
+.secondaryLink {
+  min-height: 44px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.primaryLink {
+  border: 1px solid #0f172a;
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.primaryLink:hover {
+  background-color: #1e293b;
+}
+
+.secondaryLink {
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.secondaryLink:hover {
+  border-color: #94a3b8;
+  background-color: #f8fafc;
+}
+
+.primaryLink:focus-visible,
+.secondaryLink:focus-visible {
+  outline: 3px solid rgba(15, 23, 42, 0.2);
+  outline-offset: 3px;
 }
 
 @media (max-width: 640px) {
   .page {
-    width: min(100% - 1.25rem, 1200px);
+    width: min(100% - 1.25rem, 900px);
+    padding-top: 1.5rem;
+  }
+
+  .successCard,
+  .emptyState {
+    padding: 1.5rem;
+  }
+
+  .orderMeta {
+    grid-template-columns: 1fr;
+  }
+
+  .item {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .image {
+    width: 64px;
+    height: 64px;
+  }
+
+  .itemSubtotal {
+    grid-column: 1 / -1;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+    text-align: right;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .primaryLink,
+  .secondaryLink {
+    width: 100%;
+    box-sizing: border-box;
   }
 }
