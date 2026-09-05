@@ -18,14 +18,12 @@ import styles from './WishlistPage.module.css';
 const WishlistPage = () => {
   const dispatch = useDispatch();
 
-  const productParams = useMemo(() => ({}), []);
-
   const {
     products,
     loading: productsLoading,
     error: productsError,
     refetch,
-  } = useProducts(productParams);
+  } = useProducts();
 
   const {
     productIds,

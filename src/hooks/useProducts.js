@@ -7,11 +7,15 @@ import {
 
 import { getProducts } from '../api/products.api';
 
-export const useProducts = (params = {}) => {
+const EMPTY_PARAMS = {};
+
+export const useProducts = (params = EMPTY_PARAMS) => {
   const [state, setState] = useState({
     products: [],
     loading: true,
+    refreshing: false,
     error: null,
+    hasLoaded: false,
   });
 
   const activeControllerRef = useRef(null);
@@ -36,7 +40,9 @@ export const useProducts = (params = {}) => {
             ? response.data
             : [],
           loading: false,
+          refreshing: false,
           error: null,
+          hasLoaded: true,
         });
       } catch (error) {
         if (
@@ -47,13 +53,15 @@ export const useProducts = (params = {}) => {
           return;
         }
 
-        setState({
-          products: [],
+        setState((currentState) => ({
+          ...currentState,
           loading: false,
+          refreshing: false,
           error:
             error?.message ||
             'No se han podido cargar los productos',
-        });
+          hasLoaded: true,
+        }));
       }
     },
     [params]
@@ -67,6 +75,13 @@ export const useProducts = (params = {}) => {
 
     activeControllerRef.current = controller;
 
+    setState((currentState) => ({
+      ...currentState,
+      loading: !currentState.hasLoaded,
+      refreshing: currentState.hasLoaded,
+      error: null,
+    }));
+
     executeRequest({
       signal: controller.signal,
       requestId,
@@ -74,30 +89,19 @@ export const useProducts = (params = {}) => {
   }, [executeRequest]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const requestId = ++requestIdRef.current;
-
-    activeControllerRef.current = controller;
-
-    executeRequest({
-      signal: controller.signal,
-      requestId,
-    });
+    fetchProducts();
 
     return () => {
-      controller.abort();
+      activeControllerRef.current?.abort();
     };
-  }, [executeRequest]);
-
-  const refetch = useCallback(() => {
-    fetchProducts();
   }, [fetchProducts]);
 
   return {
     products: state.products,
     loading: state.loading,
+    refreshing: state.refreshing,
     error: state.error,
-    refetch,
+    refetch: fetchProducts,
   };
 };
 

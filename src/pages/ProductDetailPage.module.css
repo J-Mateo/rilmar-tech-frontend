@@ -23,6 +23,12 @@
   color: #0f172a;
 }
 
+.breadcrumbLink:focus-visible {
+  border-radius: 0.2rem;
+  outline: 3px solid rgba(15, 23, 42, 0.2);
+  outline-offset: 3px;
+}
+
 .breadcrumbSeparator {
   color: #94a3b8;
 }
@@ -33,7 +39,9 @@
 
 .grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  grid-template-columns:
+    minmax(0, 1.1fr)
+    minmax(320px, 0.9fr);
   gap: 4rem;
   align-items: start;
 }
@@ -49,7 +57,10 @@
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   background: #ffffff;
-  cursor: zoom-in;
+}
+
+.mainImageWrapperZoomed {
+  cursor: zoom-out;
 }
 
 .mainImage {
@@ -57,23 +68,73 @@
   height: 100%;
   display: block;
   object-fit: contain;
-  transition: transform 0.3s ease;
+  transition: transform 0.25s ease;
   will-change: transform;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .mainImageZoomed {
   transform: scale(2);
-  transition: none;
+}
+
+.zoomButton {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    0 4px 14px
+    rgba(15, 23, 42, 0.12);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.zoomButton:hover {
+  border-color: #94a3b8;
+  background-color: #ffffff;
+  transform: scale(1.05);
+  box-shadow:
+    0 6px 18px
+    rgba(15, 23, 42, 0.16);
+}
+
+.zoomButton:active {
+  transform: scale(0.98);
+}
+
+.zoomButton:focus-visible {
+  outline: 3px solid rgba(15, 23, 42, 0.3);
+  outline-offset: 3px;
 }
 
 .thumbnailList {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(72px, 88px));
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(72px, 88px)
+    );
   gap: 0.75rem;
   margin-top: 1rem;
 }
 
 .thumbnailBtn {
+  min-width: 0;
   aspect-ratio: 1 / 1;
   padding: 0.25rem;
   overflow: hidden;
@@ -90,6 +151,11 @@
 .thumbnailBtn:hover {
   transform: translateY(-1px);
   border-color: #94a3b8;
+}
+
+.thumbnailBtn:focus-visible {
+  outline: 3px solid rgba(15, 23, 42, 0.25);
+  outline-offset: 3px;
 }
 
 .thumbnailBtnActive {
@@ -131,7 +197,11 @@
 .productTitle {
   margin: 0;
   color: #0f172a;
-  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-size: clamp(
+    2rem,
+    4vw,
+    3.25rem
+  );
   line-height: 1.08;
   letter-spacing: -0.03em;
 }
@@ -171,7 +241,11 @@
 .price {
   margin-top: 1.5rem;
   color: #0f172a;
-  font-size: clamp(2rem, 3vw, 2.75rem);
+  font-size: clamp(
+    2rem,
+    3vw,
+    2.75rem
+  );
   font-weight: 800;
   letter-spacing: -0.03em;
 }
@@ -224,6 +298,7 @@
   font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
+  text-decoration: none;
   cursor: pointer;
   transition:
     border-color 0.2s ease,
@@ -234,6 +309,16 @@
 .wishlistBtn:hover {
   border-color: #0f172a;
   background: #f8fafc;
+}
+
+.wishlistBtn:focus-visible {
+  outline: 3px solid rgba(15, 23, 42, 0.25);
+  outline-offset: 3px;
+}
+
+.wishlistBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .wishlistBtnActive {
@@ -282,7 +367,10 @@
 }
 
 .stateContainer {
-  width: min(100% - 2rem, 1200px);
+  width: min(
+    100% - 2rem,
+    1200px
+  );
   min-height: 55vh;
   margin: 0 auto;
   display: flex;
@@ -316,6 +404,7 @@
 .backLink:hover {
   text-decoration: underline;
 }
+
 .reviewsSection {
   margin-top: 4rem;
   padding-top: 2.5rem;
@@ -389,6 +478,11 @@
   background-color: #1e293b;
 }
 
+.reviewLoginLink:focus-visible {
+  outline: 3px solid rgba(15, 23, 42, 0.25);
+  outline-offset: 3px;
+}
+
 .reviewsState {
   margin: 1.5rem 0 0;
   padding: 2rem;
@@ -445,7 +539,128 @@
   line-height: 1.7;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .mainImageWrapperZoomed {
+    cursor: crosshair;
+  }
+}
+
+@media (hover: none),
+  (pointer: coarse) {
+  .mainImageZoomed {
+    transform-origin:
+      50% 50% !important;
+  }
+
+  .thumbnailBtn:hover {
+    transform: none;
+  }
+
+  .zoomButton:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mainImage,
+  .zoomButton,
+  .thumbnailBtn,
+  .breadcrumbLink,
+  .wishlistBtn {
+    transition: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .grid {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(300px, 0.9fr);
+    gap: 2rem;
+  }
+
+  .productTitle {
+    font-size: clamp(
+      1.8rem,
+      3vw,
+      2.5rem
+    );
+  }
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .infoColumn {
+    max-width: none;
+  }
+}
+
 @media (max-width: 640px) {
+  .container {
+    width: min(
+      100% - 1.25rem,
+      1200px
+    );
+    padding-top: 1.25rem;
+  }
+
+  .breadcrumb {
+    margin-bottom: 1.25rem;
+  }
+
+  .mainImageWrapper {
+    aspect-ratio: 1 / 1;
+    max-height: min(
+      58vh,
+      480px
+    );
+    border-radius: 12px;
+  }
+
+  .mainImage {
+    object-fit: contain;
+  }
+
+  .zoomButton {
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: 44px;
+    height: 44px;
+  }
+
+  .thumbnailList {
+    grid-template-columns:
+      repeat(
+        4,
+        minmax(0, 1fr)
+      );
+    gap: 0.6rem;
+  }
+
+  .thumbnailBtn {
+    min-width: 0;
+  }
+
+  .ratingWrapper {
+    flex-wrap: wrap;
+  }
+
+  .productTitle {
+    font-size: 2rem;
+  }
+
+  .price {
+    font-size: 2rem;
+  }
+
+  .guaranteesBox {
+    padding: 1rem;
+  }
+
   .reviewsSection {
     margin-top: 3rem;
     padding-top: 2rem;
@@ -470,51 +685,5 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 0.5rem;
-  }
-}
-
-@media (max-width: 900px) {
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-  }
-
-  .infoColumn {
-    max-width: 720px;
-  }
-}
-
-@media (max-width: 640px) {
-  .container {
-    width: min(100% - 1.25rem, 1200px);
-    padding-top: 1.25rem;
-  }
-
-  .breadcrumb {
-    margin-bottom: 1.25rem;
-  }
-
-  .mainImageWrapper {
-    border-radius: 12px;
-  }
-
-  .thumbnailList {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .ratingWrapper {
-    flex-wrap: wrap;
-  }
-
-  .productTitle {
-    font-size: 2rem;
-  }
-
-  .price {
-    font-size: 2rem;
-  }
-
-  .guaranteesBox {
-    padding: 1rem;
   }
 }

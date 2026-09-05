@@ -19,11 +19,32 @@ const CATEGORY_LABELS = {
 
 const CATEGORIES = Object.keys(CATEGORY_LABELS);
 
+const SORT_OPTIONS = [
+  {
+    label: 'Más recientes',
+    sortBy: 'createdAt',
+    order: 'desc',
+  },
+  {
+    label: 'Precio: menor a mayor',
+    sortBy: 'price',
+    order: 'asc',
+  },
+  {
+    label: 'Precio: mayor a menor',
+    sortBy: 'price',
+    order: 'desc',
+  },
+];
+
 const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] =
     useState('');
   const [category, setCategory] = useState('');
+  const [sortOption, setSortOption] = useState(
+    'createdAt-desc'
+  );
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -41,15 +62,29 @@ const ProductsPage = () => {
     }
 
     if (debouncedSearch.trim()) {
-      params.search = debouncedSearch.trim();
+      params.search =
+        debouncedSearch.trim();
+    }
+
+    const [sortBy, order] =
+      sortOption.split('-');
+
+    if (sortBy && order) {
+      params.sortBy = sortBy;
+      params.order = order;
     }
 
     return params;
-  }, [category, debouncedSearch]);
+  }, [
+    category,
+    debouncedSearch,
+    sortOption,
+  ]);
 
   const {
     products = [],
     loading,
+    refreshing,
     error,
     refetch,
   } = useProducts(queryParams);
@@ -66,7 +101,9 @@ const ProductsPage = () => {
           placeholder="Buscar productos..."
           value={searchTerm}
           onChange={(event) =>
-            setSearchTerm(event.target.value)
+            setSearchTerm(
+              event.target.value
+            )
           }
           className={styles.searchInput}
           aria-label="Buscar productos"
@@ -75,35 +112,81 @@ const ProductsPage = () => {
         <select
           value={category}
           onChange={(event) =>
-            setCategory(event.target.value)
+            setCategory(
+              event.target.value
+            )
           }
-          className={styles.categorySelect}
+          className={
+            styles.categorySelect
+          }
           aria-label="Filtrar por categoría"
         >
           <option value="">
             Todas las categorías
           </option>
 
-          {CATEGORIES.map((currentCategory) => (
-            <option
-              key={currentCategory}
-              value={currentCategory}
-            >
-              {CATEGORY_LABELS[currentCategory]}
-            </option>
-          ))}
+          {CATEGORIES.map(
+            (currentCategory) => (
+              <option
+                key={currentCategory}
+                value={currentCategory}
+              >
+                {
+                  CATEGORY_LABELS[
+                    currentCategory
+                  ]
+                }
+              </option>
+            )
+          )}
+        </select>
+
+        <select
+          value={sortOption}
+          onChange={(event) =>
+            setSortOption(
+              event.target.value
+            )
+          }
+          className={styles.sortSelect}
+          aria-label="Ordenar productos"
+        >
+          {SORT_OPTIONS.map(
+            (option) => (
+              <option
+                key={`${option.sortBy}-${option.order}`}
+                value={`${option.sortBy}-${option.order}`}
+              >
+                {option.label}
+              </option>
+            )
+          )}
         </select>
       </div>
 
+      {refreshing && (
+        <p
+          className={styles.refreshingState}
+          role="status"
+          aria-live="polite"
+        >
+          Actualizando productos...
+        </p>
+      )}
+
       {loading && (
-        <div className={styles.state}>
+        <div
+          className={styles.state}
+          role="status"
+          aria-live="polite"
+        >
           <p>
             Cargando catálogo de productos...
           </p>
         </div>
       )}
 
-      {error && (
+      {!loading && error && (
         <div className={styles.errorState}>
           <p className={styles.errorMessage}>
             {error}

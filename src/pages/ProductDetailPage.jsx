@@ -1,10 +1,16 @@
-import { useMemo, useState } from 'react';
+import {
+  useMemo,
+  useState,
+} from 'react';
 import {
   Link,
   useNavigate,
   useParams,
 } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import {
+  useDispatch,
+  useSelector,
+} from 'react-redux';
 import {
   Heart,
   MessageSquare,
@@ -13,6 +19,8 @@ import {
   ShoppingCart,
   Star,
   Truck,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 
 import { useProduct } from '../hooks/useProduct';
@@ -22,6 +30,7 @@ import {
   addCartItem,
   selectCartMutationLoading,
 } from '../store/slices/cartSlice';
+
 import {
   toggleWishlistProduct,
 } from '../store/slices/wishlistSlice';
@@ -34,12 +43,10 @@ import styles from './ProductDetailPage.module.css';
 const FALLBACK_IMAGE =
   'https://via.placeholder.com/500x400?text=Sin+imagen';
 
-const dateFormatter = new Intl.DateTimeFormat(
-  'es-ES',
-  {
+const dateFormatter =
+  new Intl.DateTimeFormat('es-ES', {
     dateStyle: 'medium',
-  }
-);
+  });
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -49,14 +56,14 @@ const ProductDetailPage = () => {
   const [selectedImage, setSelectedImage] =
     useState('');
 
+  const [isZoomed, setIsZoomed] =
+    useState(false);
+
   const [zoomPosition, setZoomPosition] =
     useState({
       x: 50,
       y: 50,
     });
-
-  const [isHovered, setIsHovered] =
-    useState(false);
 
   const {
     product,
@@ -71,14 +78,18 @@ const ProductDetailPage = () => {
     refetch: refetchReviews,
   } = useReviews(id);
 
-  const { isAuthenticated } = useSelector(
+  const {
+    isAuthenticated,
+  } = useSelector(
     (state) => state.auth
   );
 
   const {
     productIds,
     togglingProductId,
-  } = useSelector((state) => state.wishlist);
+  } = useSelector(
+    (state) => state.wishlist
+  );
 
   const cartMutationLoading = useSelector(
     selectCartMutationLoading
@@ -99,7 +110,8 @@ const ProductDetailPage = () => {
     );
 
     return {
-      average: total / reviews.length,
+      average:
+        total / reviews.length,
       count: reviews.length,
     };
   }, [reviews]);
@@ -120,7 +132,8 @@ const ProductDetailPage = () => {
     );
   }
 
-  const productId = String(product.id);
+  const productId =
+    String(product.id);
 
   const images =
     Array.isArray(product.images) &&
@@ -138,14 +151,21 @@ const ProductDetailPage = () => {
     productIds.includes(productId);
 
   const isTogglingWishlist =
-    String(togglingProductId) === productId;
+    String(togglingProductId) ===
+    productId;
 
   const isOutOfStock =
     product.stock !== null &&
     product.stock !== undefined &&
     Number(product.stock) <= 0;
 
-  const handleMouseMove = (event) => {
+  const handleZoomMove = (
+    event
+  ) => {
+    if (!isZoomed) {
+      return;
+    }
+
     const {
       left,
       top,
@@ -155,55 +175,100 @@ const ProductDetailPage = () => {
       event.currentTarget.getBoundingClientRect();
 
     const x =
-      ((event.clientX - left) / width) * 100;
+      ((event.clientX - left) /
+        width) *
+      100;
 
     const y =
-      ((event.clientY - top) / height) * 100;
+      ((event.clientY - top) /
+        height) *
+      100;
 
-    setZoomPosition({ x, y });
+    setZoomPosition({
+      x: Math.min(
+        100,
+        Math.max(0, x)
+      ),
+      y: Math.min(
+        100,
+        Math.max(0, y)
+      ),
+    });
   };
 
-  const handleAddToCart = async () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
+  const handleZoomToggle = () => {
+    setIsZoomed(
+      (currentValue) =>
+        !currentValue
+    );
 
-    if (
-      cartMutationLoading ||
-      isOutOfStock
-    ) {
-      return;
-    }
-
-    try {
-      await dispatch(
-        addCartItem({
-          productId: product.id,
-          quantity: 1,
-        })
-      ).unwrap();
-    } catch {
-      return;
-    }
+    setZoomPosition({
+      x: 50,
+      y: 50,
+    });
   };
 
-  const handleWishlist = async () => {
-    if (
-      !isAuthenticated ||
-      isTogglingWishlist
-    ) {
-      return;
-    }
+  const handleImageSelect = (
+    imageUrl
+  ) => {
+    setSelectedImage(
+      imageUrl
+    );
 
-    try {
-      await dispatch(
-        toggleWishlistProduct(product.id)
-      ).unwrap();
-    } catch {
-      return;
-    }
+    setIsZoomed(false);
+
+    setZoomPosition({
+      x: 50,
+      y: 50,
+    });
   };
+
+  const handleAddToCart =
+    async () => {
+      if (!isAuthenticated) {
+        navigate('/login');
+        return;
+      }
+
+      if (
+        cartMutationLoading ||
+        isOutOfStock
+      ) {
+        return;
+      }
+
+      try {
+        await dispatch(
+          addCartItem({
+            productId:
+              product.id,
+            quantity: 1,
+          })
+        ).unwrap();
+      } catch {
+        return;
+      }
+    };
+
+  const handleWishlist =
+    async () => {
+      if (
+        !isAuthenticated ||
+        isTogglingWishlist
+      ) {
+        return;
+      }
+
+      try {
+        await dispatch(
+          toggleWishlistProduct(
+            product.id
+          )
+        ).unwrap();
+      } catch {
+        return;
+      }
+    };
 
   return (
     <main className={styles.container}>
@@ -213,42 +278,54 @@ const ProductDetailPage = () => {
       >
         <Link
           to="/products"
-          className={styles.breadcrumbLink}
+          className={
+            styles.breadcrumbLink
+          }
         >
           Catálogo
         </Link>
 
-        <span>/</span>
+        <span
+          className={
+            styles.breadcrumbSeparator
+          }
+          aria-hidden="true"
+        >
+          /
+        </span>
 
-        <span>
-          {product.category || 'Producto'}
+        <span
+          className={
+            styles.breadcrumbCurrent
+          }
+        >
+          {product.category ||
+            'Producto'}
         </span>
       </nav>
 
       <div className={styles.grid}>
         <section
-          className={styles.galleryColumn}
+          className={
+            styles.galleryColumn
+          }
           aria-label={`Imágenes de ${product.name}`}
         >
           <div
             className={`${styles.mainImageWrapper} ${
-              isHovered
+              isZoomed
                 ? styles.mainImageWrapperZoomed
                 : ''
             }`}
-            onMouseEnter={() =>
-              setIsHovered(true)
+            onMouseMove={
+              handleZoomMove
             }
-            onMouseLeave={() =>
-              setIsHovered(false)
-            }
-            onMouseMove={handleMouseMove}
           >
             <img
               src={currentImage}
               alt={product.name}
               className={`${styles.mainImage} ${
-                isHovered
+                isZoomed
                   ? styles.mainImageZoomed
                   : ''
               }`}
@@ -256,29 +333,65 @@ const ProductDetailPage = () => {
                 transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
               }}
             />
+
+            <button
+              type="button"
+              onClick={
+                handleZoomToggle
+              }
+              className={
+                styles.zoomButton
+              }
+              aria-label={
+                isZoomed
+                  ? `Desactivar zoom de ${product.name}`
+                  : `Ampliar imagen de ${product.name}`
+              }
+              aria-pressed={
+                isZoomed
+              }
+            >
+              {isZoomed ? (
+                <ZoomOut
+                  size={20}
+                  aria-hidden="true"
+                />
+              ) : (
+                <ZoomIn
+                  size={20}
+                  aria-hidden="true"
+                />
+              )}
+            </button>
           </div>
 
           {images.length > 1 && (
             <div
-              className={styles.thumbnailList}
+              className={
+                styles.thumbnailList
+              }
               aria-label="Galería de imágenes"
             >
               {images.map(
-                (imageUrl, index) => {
+                (
+                  imageUrl,
+                  index
+                ) => {
                   const isActive =
-                    currentImage === imageUrl;
+                    currentImage ===
+                    imageUrl;
 
                   return (
                     <button
                       key={`${imageUrl}-${index}`}
                       type="button"
                       onMouseEnter={() =>
-                        setSelectedImage(
+                        handleImageSelect(
                           imageUrl
                         )
                       }
                       onClick={() =>
-                        setSelectedImage(
+                        handleImageSelect(
                           imageUrl
                         )
                       }
@@ -288,10 +401,14 @@ const ProductDetailPage = () => {
                           : ''
                       }`}
                       aria-label={`Ver imagen ${index + 1} de ${product.name}`}
-                      aria-pressed={isActive}
+                      aria-pressed={
+                        isActive
+                      }
                     >
                       <img
-                        src={imageUrl}
+                        src={
+                          imageUrl
+                        }
                         alt=""
                         className={
                           styles.thumbnailImg
@@ -305,91 +422,160 @@ const ProductDetailPage = () => {
           )}
         </section>
 
-        <section className={styles.infoColumn}>
-          <h1 className={styles.productTitle}>
+        <section
+          className={
+            styles.infoColumn
+          }
+        >
+          <h1
+            className={
+              styles.productTitle
+            }
+          >
             {product.name}
           </h1>
 
-          <div className={styles.ratingWrapper}>
-            <span className={styles.ratingValue}>
-              {ratingSummary.count > 0
-                ? ratingSummary.average.toFixed(1)
+          <div
+            className={
+              styles.ratingWrapper
+            }
+          >
+            <span
+              className={
+                styles.ratingValue
+              }
+            >
+              {ratingSummary.count >
+              0
+                ? ratingSummary.average.toFixed(
+                    1
+                  )
                 : '—'}
             </span>
 
             <div
-              className={styles.stars}
+              className={
+                styles.stars
+              }
               aria-label={
-                ratingSummary.count > 0
+                ratingSummary.count >
+                0
                   ? `Valoración de ${ratingSummary.average.toFixed(1)} sobre 5`
                   : 'Producto sin valoraciones'
               }
             >
-              {[1, 2, 3, 4, 5].map(
-                (star) => (
+              {[
+                1,
+                2,
+                3,
+                4,
+                5,
+              ].map((star) => {
+                const active =
+                  star <=
+                  Math.round(
+                    ratingSummary.average
+                  );
+
+                return (
                   <Star
                     key={star}
                     size={16}
                     fill={
-                      star <=
-                      Math.round(
-                        ratingSummary.average
-                      )
+                      active
                         ? 'currentColor'
                         : 'none'
                     }
                     className={
-                      star >
-                      Math.round(
-                        ratingSummary.average
-                      )
-                        ? styles.inactiveStar
-                        : ''
+                      active
+                        ? ''
+                        : styles.inactiveStar
                     }
                     aria-hidden="true"
                   />
-                )
-              )}
+                );
+              })}
             </div>
 
-            <span className={styles.reviewCount}>
-              <MessageSquare size={14} />
+            <span
+              className={
+                styles.reviewCount
+              }
+            >
+              <MessageSquare
+                size={14}
+                aria-hidden="true"
+              />
 
-              {ratingSummary.count}{' '}
-              {ratingSummary.count === 1
+              {
+                ratingSummary.count
+              }{' '}
+              {ratingSummary.count ===
+              1
                 ? 'opinión'
                 : 'opiniones'}
             </span>
           </div>
 
           {product.category && (
-            <p className={styles.categoryTag}>
+            <p
+              className={
+                styles.categoryTag
+              }
+            >
               {product.category}
             </p>
           )}
 
-          <div className={styles.price}>
-            {Number(product.price).toFixed(2)} €
+          <div
+            className={
+              styles.price
+            }
+          >
+            {Number(
+              product.price
+            ).toFixed(2)}{' '}
+            €
           </div>
 
-          <div className={styles.stockStatus}>
+          <div
+            className={
+              styles.stockStatus
+            }
+          >
             {isOutOfStock ? (
-              <span className={styles.outOfStock}>
+              <span
+                className={
+                  styles.outOfStock
+                }
+              >
                 Sin stock
               </span>
             ) : (
-              <span className={styles.inStock}>
+              <span
+                className={
+                  styles.inStock
+                }
+              >
                 Disponible
               </span>
             )}
           </div>
 
-          <div className={styles.actionButtons}>
+          <div
+            className={
+              styles.actionButtons
+            }
+          >
             <Button
               type="button"
               variant="primary"
-              className={styles.primaryAction}
-              onClick={handleAddToCart}
+              className={
+                styles.primaryAction
+              }
+              onClick={
+                handleAddToCart
+              }
               disabled={
                 cartMutationLoading ||
                 isOutOfStock
@@ -398,14 +584,20 @@ const ProductDetailPage = () => {
                 cartMutationLoading
               }
             >
-              <ShoppingCart size={18} />
+              <ShoppingCart
+                size={18}
+                aria-hidden="true"
+              />
+
               AÑADIR AL CARRITO
             </Button>
 
             {isAuthenticated ? (
               <button
                 type="button"
-                onClick={handleWishlist}
+                onClick={
+                  handleWishlist
+                }
                 disabled={
                   isTogglingWishlist
                 }
@@ -414,7 +606,9 @@ const ProductDetailPage = () => {
                     ? styles.wishlistBtnActive
                     : ''
                 }`}
-                aria-pressed={isWishlist}
+                aria-pressed={
+                  isWishlist
+                }
               >
                 <Heart
                   size={16}
@@ -423,6 +617,7 @@ const ProductDetailPage = () => {
                       ? 'currentColor'
                       : 'none'
                   }
+                  aria-hidden="true"
                 />
 
                 {isWishlist
@@ -432,22 +627,38 @@ const ProductDetailPage = () => {
             ) : (
               <Link
                 to="/login"
-                className={styles.wishlistBtn}
+                className={
+                  styles.wishlistBtn
+                }
               >
-                <Heart size={16} />
-                INICIA SESIÓN PARA GUARDARLO
+                <Heart
+                  size={16}
+                  aria-hidden="true"
+                />
+
+                INICIA SESIÓN PARA
+                GUARDARLO
               </Link>
             )}
           </div>
 
-          <div className={styles.guaranteesBox}>
+          <div
+            className={
+              styles.guaranteesBox
+            }
+          >
             <div
               className={
                 styles.guaranteeItem
               }
             >
-              <Truck size={18} />
-              ENVÍO GRATUITO (DE 24 A 48 HORAS)
+              <Truck
+                size={18}
+                aria-hidden="true"
+              />
+
+              ENVÍO GRATUITO (DE 24 A
+              48 HORAS)
             </div>
 
             <div
@@ -455,8 +666,13 @@ const ProductDetailPage = () => {
                 styles.guaranteeItem
               }
             >
-              <RefreshCw size={18} />
-              30 DÍAS DE PRUEBA SIN COMPROMISO
+              <RefreshCw
+                size={18}
+                aria-hidden="true"
+              />
+
+              30 DÍAS DE PRUEBA SIN
+              COMPROMISO
             </div>
 
             <div
@@ -464,13 +680,22 @@ const ProductDetailPage = () => {
                 styles.guaranteeItem
               }
             >
-              <ShieldCheck size={18} />
-              3 AÑOS DE GARANTÍA OFICIAL
+              <ShieldCheck
+                size={18}
+                aria-hidden="true"
+              />
+
+              3 AÑOS DE GARANTÍA
+              OFICIAL
             </div>
           </div>
 
           {product.description && (
-            <p className={styles.description}>
+            <p
+              className={
+                styles.description
+              }
+            >
               {product.description}
             </p>
           )}
@@ -478,26 +703,43 @@ const ProductDetailPage = () => {
       </div>
 
       <section
-        className={styles.reviewsSection}
+        className={
+          styles.reviewsSection
+        }
         aria-labelledby="reviews-title"
       >
-        <div className={styles.reviewsHeader}>
+        <div
+          className={
+            styles.reviewsHeader
+          }
+        >
           <div>
-            <p className={styles.reviewsEyebrow}>
+            <p
+              className={
+                styles.reviewsEyebrow
+              }
+            >
               Opiniones
             </p>
 
             <h2
               id="reviews-title"
-              className={styles.reviewsTitle}
+              className={
+                styles.reviewsTitle
+              }
             >
               Reseñas de clientes
             </h2>
           </div>
 
-          <span className={styles.reviewsCountBadge}>
+          <span
+            className={
+              styles.reviewsCountBadge
+            }
+          >
             {ratingSummary.count}{' '}
-            {ratingSummary.count === 1
+            {ratingSummary.count ===
+            1
               ? 'reseña'
               : 'reseñas'}
           </span>
@@ -505,20 +747,29 @@ const ProductDetailPage = () => {
 
         {isAuthenticated ? (
           <ReviewForm
-            productId={product.id}
+            productId={
+              product.id
+            }
             onReviewCreated={
               refetchReviews
             }
           />
         ) : (
-          <div className={styles.reviewLogin}>
+          <div
+            className={
+              styles.reviewLogin
+            }
+          >
             <p>
-              Inicia sesión para publicar una reseña.
+              Inicia sesión para
+              publicar una reseña.
             </p>
 
             <Link
               to="/login"
-              className={styles.reviewLoginLink}
+              className={
+                styles.reviewLoginLink
+              }
             >
               Iniciar sesión
             </Link>
@@ -526,14 +777,20 @@ const ProductDetailPage = () => {
         )}
 
         {reviewsLoading && (
-          <p className={styles.reviewsState}>
+          <p
+            className={
+              styles.reviewsState
+            }
+          >
             Cargando reseñas...
           </p>
         )}
 
         {reviewsError && (
           <p
-            className={styles.reviewsError}
+            className={
+              styles.reviewsError
+            }
             role="alert"
           >
             {reviewsError}
@@ -542,86 +799,119 @@ const ProductDetailPage = () => {
 
         {!reviewsLoading &&
           !reviewsError &&
-          reviews.length === 0 && (
-            <p className={styles.reviewsState}>
-              Este producto todavía no tiene reseñas.
+          reviews.length ===
+            0 && (
+            <p
+              className={
+                styles.reviewsState
+              }
+            >
+              Este producto todavía
+              no tiene reseñas.
             </p>
           )}
 
         {!reviewsLoading &&
           !reviewsError &&
-          reviews.length > 0 && (
-            <div className={styles.reviewList}>
-              {reviews.map((review) => (
-                <article
-                  key={review._id}
-                  className={styles.review}
-                >
-                  <div
+          reviews.length >
+            0 && (
+            <div
+              className={
+                styles.reviewList
+              }
+            >
+              {reviews.map(
+                (review) => (
+                  <article
+                    key={
+                      review._id
+                    }
                     className={
-                      styles.reviewTop
+                      styles.review
                     }
                   >
                     <div
                       className={
-                        styles.reviewStars
+                        styles.reviewTop
                       }
-                      aria-label={`${review.rating} de 5 estrellas`}
                     >
-                      {[1, 2, 3, 4, 5].map(
-                        (star) => (
-                          <Star
-                            key={star}
-                            size={16}
-                            fill={
+                      <div
+                        className={
+                          styles.reviewStars
+                        }
+                        aria-label={`${review.rating} de 5 estrellas`}
+                      >
+                        {[
+                          1,
+                          2,
+                          3,
+                          4,
+                          5,
+                        ].map(
+                          (
+                            star
+                          ) => {
+                            const active =
                               star <=
                               Number(
                                 review.rating
+                              );
+
+                            return (
+                              <Star
+                                key={
+                                  star
+                                }
+                                size={
+                                  16
+                                }
+                                fill={
+                                  active
+                                    ? 'currentColor'
+                                    : 'none'
+                                }
+                                className={
+                                  active
+                                    ? ''
+                                    : styles.inactiveStar
+                                }
+                                aria-hidden="true"
+                              />
+                            );
+                          }
+                        )}
+                      </div>
+
+                      <time
+                        className={
+                          styles.reviewDate
+                        }
+                        dateTime={
+                          review.createdAt
+                        }
+                      >
+                        {review.createdAt
+                          ? dateFormatter.format(
+                              new Date(
+                                review.createdAt
                               )
-                                ? 'currentColor'
-                                : 'none'
-                            }
-                            className={
-                              star >
-                              Number(
-                                review.rating
-                              )
-                                ? styles.inactiveStar
-                                : ''
-                            }
-                            aria-hidden="true"
-                          />
-                        )
-                      )}
+                            )
+                          : ''}
+                      </time>
                     </div>
 
-                    <time
+                    <p
                       className={
-                        styles.reviewDate
-                      }
-                      dateTime={
-                        review.createdAt
+                        styles.reviewComment
                       }
                     >
-                      {review.createdAt
-                        ? dateFormatter.format(
-                            new Date(
-                              review.createdAt
-                            )
-                          )
-                        : ''}
-                    </time>
-                  </div>
-
-                  <p
-                    className={
-                      styles.reviewComment
-                    }
-                  >
-                    {review.comment}
-                  </p>
-                </article>
-              ))}
+                      {
+                        review.comment
+                      }
+                    </p>
+                  </article>
+                )
+              )}
             </div>
           )}
       </section>
