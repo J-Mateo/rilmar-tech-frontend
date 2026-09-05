@@ -24,6 +24,7 @@ import {
 
 import {
   addCartItem,
+  prepareBuyNow,
   selectCartMutationLoading,
 } from '../../store/slices/cartSlice';
 
@@ -102,7 +103,7 @@ const ProductCard = ({
     Array.isArray(
       product.images
     ) &&
-      product.images.length > 0
+    product.images.length > 0
       ? product.images[0]
       : FALLBACK_IMAGE;
 
@@ -130,12 +131,7 @@ const ProductCard = ({
   const isAddingToCart =
     cartMutationLoading &&
     activeCartAction ===
-    'cart';
-
-  const isBuyingNow =
-    cartMutationLoading &&
-    activeCartAction ===
-    'buy';
+      'cart';
 
   const redirectToLogin =
     () => {
@@ -147,16 +143,6 @@ const ProductCard = ({
       });
     };
 
-  /*
-   * Consultamos la alerta solamente
-   * cuando:
-   *
-   * - el producto está agotado
-   * - el usuario está autenticado
-   *
-   * Así evitamos peticiones innecesarias
-   * para productos disponibles.
-   */
   useEffect(() => {
     let cancelled = false;
 
@@ -204,10 +190,6 @@ const ProductCard = ({
             return;
           }
 
-          /*
-           * No bloqueamos la card si
-           * falla esta consulta.
-           */
           setRestockSubscribed(
             false
           );
@@ -295,7 +277,7 @@ const ProductCard = ({
       } catch (error) {
         setRestockError(
           error?.message ||
-          'No se ha podido actualizar el aviso.'
+            'No se ha podido actualizar el aviso.'
         );
       } finally {
         setRestockLoading(
@@ -327,6 +309,7 @@ const ProductCard = ({
           addCartItem({
             productId:
               product.id,
+
             quantity: 1,
           })
         ).unwrap();
@@ -339,54 +322,25 @@ const ProductCard = ({
       }
     };
 
-  const handleBuyNow =
-    async () => {
-      if (!isAuthenticated) {
-        redirectToLogin();
-        return;
-      }
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      redirectToLogin();
+      return;
+    }
 
-      if (
-        cartMutationLoading ||
-        isOutOfStock
-      ) {
-        return;
-      }
+    if (isOutOfStock) {
+      return;
+    }
 
-      setActiveCartAction(
-        'buy'
-      );
+    dispatch(
+      prepareBuyNow({
+        product,
+        quantity: 1,
+      })
+    );
 
-      try {
-        /*
-         * IMPORTANTE:
-         *
-         * Este flujo todavía usa el
-         * carrito normal.
-         *
-         * Lo corregiremos para que
-         * "Comprar ahora" no mezcle
-         * productos del carrito.
-         */
-        await dispatch(
-          addCartItem({
-            productId:
-              product.id,
-            quantity: 1,
-          })
-        ).unwrap();
-
-        navigate(
-          '/checkout'
-        );
-      } catch {
-        return;
-      } finally {
-        setActiveCartAction(
-          null
-        );
-      }
-    };
+    navigate('/checkout');
+  };
 
   return (
     <article
@@ -434,10 +388,11 @@ const ProductCard = ({
             disabled={
               isTogglingWishlist
             }
-            className={`${styles.wishlistButton} ${isWishlist
+            className={`${styles.wishlistButton} ${
+              isWishlist
                 ? styles.wishlistButtonActive
                 : ''
-              }`}
+            }`}
             aria-label={
               isWishlist
                 ? `Eliminar ${product.name} de la lista de deseos`
@@ -524,10 +479,11 @@ const ProductCard = ({
                   !restockInitialized
                 )
               }
-              className={`${styles.restockButton} ${restockSubscribed
+              className={`${styles.restockButton} ${
+                restockSubscribed
                   ? styles.restockButtonActive
                   : ''
-                }`}
+              }`}
               aria-pressed={
                 restockSubscribed
               }
@@ -547,7 +503,7 @@ const ProductCard = ({
               {restockLoading
                 ? 'Actualizando...'
                 : isAuthenticated &&
-                  !restockInitialized
+                    !restockInitialized
                   ? 'Comprobando...'
                   : restockSubscribed
                     ? 'Aviso activado'
@@ -629,16 +585,11 @@ const ProductCard = ({
               onClick={
                 handleBuyNow
               }
-              disabled={
-                cartMutationLoading
-              }
               className={
                 styles.buyNowButton
               }
             >
-              {isBuyingNow
-                ? 'Preparando compra...'
-                : 'Comprar ahora'}
+              Comprar ahora
             </button>
           </>
         )}

@@ -17,6 +17,7 @@ import {
 } from 'react-router-dom';
 
 import {
+  prepareCartCheckout,
   removeCartItem,
   updateCartItemQuantity,
   selectCartError,
@@ -36,6 +37,9 @@ const currencyFormatter =
       currency: 'EUR',
     }
   );
+
+const FALLBACK_IMAGE =
+  'https://via.placeholder.com/300x300?text=Sin+imagen';
 
 const CartPage = () => {
   const dispatch =
@@ -99,6 +103,24 @@ const CartPage = () => {
       } catch {
         return;
       }
+    };
+
+  const handleCheckout =
+    () => {
+      /*
+       * Indicamos expresamente que
+       * entramos desde el carrito.
+       *
+       * Esto elimina cualquier
+       * "Comprar ahora" anterior.
+       */
+      dispatch(
+        prepareCartCheckout()
+      );
+
+      navigate(
+        '/checkout'
+      );
     };
 
   if (loading) {
@@ -231,11 +253,10 @@ const CartPage = () => {
                     product?.images
                   ) &&
                   product.images
-                    .length >
-                    0
+                    .length > 0
                     ? product
                         .images[0]
-                    : 'https://via.placeholder.com/300x300?text=Sin+imagen';
+                    : FALLBACK_IMAGE;
 
                 const price =
                   Number(
@@ -371,9 +392,7 @@ const CartPage = () => {
                             aria-label={`Reducir cantidad de ${product?.name || 'producto'}`}
                           >
                             <Minus
-                              size={
-                                16
-                              }
+                              size={16}
                               aria-hidden="true"
                             />
                           </button>
@@ -410,9 +429,7 @@ const CartPage = () => {
                             aria-label={`Aumentar cantidad de ${product?.name || 'producto'}`}
                           >
                             <Plus
-                              size={
-                                16
-                              }
+                              size={16}
                               aria-hidden="true"
                             />
                           </button>
@@ -451,9 +468,7 @@ const CartPage = () => {
                         aria-label={`Eliminar ${product?.name || 'producto'} del carrito`}
                       >
                         <Trash2
-                          size={
-                            17
-                          }
+                          size={17}
                           aria-hidden="true"
                         />
 
@@ -537,10 +552,8 @@ const CartPage = () => {
 
             <button
               type="button"
-              onClick={() =>
-                navigate(
-                  '/checkout'
-                )
+              onClick={
+                handleCheckout
               }
               className={
                 styles.checkoutButton
