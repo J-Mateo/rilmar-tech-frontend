@@ -12,6 +12,7 @@ import {
 
 export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
+
   async (_, { rejectWithValue }) => {
     try {
       const response = await getProfileApi();
@@ -20,11 +21,23 @@ export const checkAuth = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error);
     }
+  },
+
+  {
+    condition: (_, { getState }) => {
+      const {
+        initialized,
+        isCheckingAuth,
+      } = getState().auth;
+
+      return !initialized && !isCheckingAuth;
+    },
   }
 );
 
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
+
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await loginApi(credentials);
@@ -38,6 +51,7 @@ export const loginUser = createAsyncThunk(
 
 export const registerUser = createAsyncThunk(
   'auth/registerUser',
+
   async (userData, { rejectWithValue }) => {
     try {
       const response = await registerApi(userData);
@@ -51,6 +65,7 @@ export const registerUser = createAsyncThunk(
 
 export const logoutUser = createAsyncThunk(
   'auth/logoutUser',
+
   async (_, { rejectWithValue }) => {
     try {
       await logoutApi();
@@ -65,7 +80,8 @@ export const logoutUser = createAsyncThunk(
 const initialState = {
   user: null,
   isAuthenticated: false,
-  isCheckingAuth: true,
+  isCheckingAuth: false,
+  initialized: false,
   loading: false,
   error: null,
   errorCode: null,
@@ -85,6 +101,7 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.isCheckingAuth = false;
+      state.initialized = true;
       state.loading = false;
       state.error = null;
       state.errorCode = null;
@@ -95,10 +112,13 @@ const authSlice = createSlice({
     builder
       .addCase(checkAuth.pending, (state) => {
         state.isCheckingAuth = true;
+        state.error = null;
+        state.errorCode = null;
       })
 
       .addCase(checkAuth.fulfilled, (state, action) => {
         state.isCheckingAuth = false;
+        state.initialized = true;
         state.isAuthenticated = true;
         state.user = action.payload;
         state.error = null;
@@ -107,6 +127,7 @@ const authSlice = createSlice({
 
       .addCase(checkAuth.rejected, (state, action) => {
         state.isCheckingAuth = false;
+        state.initialized = true;
 
         if (action.payload?.status === 401) {
           state.isAuthenticated = false;
@@ -116,6 +137,9 @@ const authSlice = createSlice({
 
           return;
         }
+
+        state.isAuthenticated = false;
+        state.user = null;
 
         state.error =
           action.payload?.message ||
@@ -134,6 +158,7 @@ const authSlice = createSlice({
 
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
+        state.initialized = true;
         state.isAuthenticated = true;
         state.user = action.payload;
         state.error = null;
@@ -160,6 +185,7 @@ const authSlice = createSlice({
 
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
+        state.initialized = true;
         state.isAuthenticated = true;
         state.user = action.payload;
         state.error = null;
@@ -187,6 +213,8 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.isAuthenticated = false;
+        state.isCheckingAuth = false;
+        state.initialized = true;
         state.loading = false;
         state.error = null;
         state.errorCode = null;

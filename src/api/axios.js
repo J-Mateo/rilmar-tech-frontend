@@ -41,7 +41,10 @@ const apiClient = axios.create({
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(normalizeHttpError(error))
+  (error) =>
+    Promise.reject(
+      normalizeHttpError(error)
+    )
 );
 
 export default apiClient;

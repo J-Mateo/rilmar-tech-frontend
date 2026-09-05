@@ -19,6 +19,3 @@ export const getProfileApi = async () => {
   const response = await apiClient.get('/users/profile');
   return response.data;
 };
-
-export const login = loginApi;
-export const register = registerApi;
