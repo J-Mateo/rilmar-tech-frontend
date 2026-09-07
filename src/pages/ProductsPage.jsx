@@ -9,77 +9,205 @@ import ProductGrid from '../components/product/ProductGrid';
 import Button from '../components/common/Button/Button';
 import styles from './ProductsPage.module.css';
 
-const CATEGORY_LABELS = {
-  Productividad: 'Productividad',
-  Workspace: 'Workspace',
-  Audio: 'Audio',
-  SmartHome: 'Smart Home',
-  Creatividad: 'Creatividad',
-};
-
-const CATEGORIES = Object.keys(CATEGORY_LABELS);
+const CATEGORY_OPTIONS = [
+  'Workspace',
+  'Productividad',
+  'Creatividad',
+  'Smart Home',
+  'Audio',
+];
 
 const SORT_OPTIONS = [
   {
-    label: 'Más recientes',
-    sortBy: 'createdAt',
-    order: 'desc',
+    label:
+      'Más recientes',
+    sortBy:
+      'createdAt',
+    order:
+      'desc',
   },
   {
-    label: 'Precio: menor a mayor',
-    sortBy: 'price',
-    order: 'asc',
+    label:
+      'Precio: menor a mayor',
+    sortBy:
+      'price',
+    order:
+      'asc',
   },
   {
-    label: 'Precio: mayor a menor',
-    sortBy: 'price',
-    order: 'desc',
+    label:
+      'Precio: mayor a menor',
+    sortBy:
+      'price',
+    order:
+      'desc',
+  },
+  {
+    label:
+      'Disponibles primero',
+    sortBy:
+      'availability',
+    order:
+      'desc',
   },
 ];
 
+const FILTER_DEBOUNCE_MS =
+  350;
+
 const ProductsPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] =
-    useState('');
-  const [category, setCategory] = useState('');
-  const [sortOption, setSortOption] = useState(
+  const [
+    searchTerm,
+    setSearchTerm,
+  ] = useState('');
+
+  const [
+    debouncedSearch,
+    setDebouncedSearch,
+  ] = useState('');
+
+  const [
+    category,
+    setCategory,
+  ] = useState('');
+
+  const [
+    availability,
+    setAvailability,
+  ] = useState('');
+
+  const [
+    minPrice,
+    setMinPrice,
+  ] = useState('');
+
+  const [
+    maxPrice,
+    setMaxPrice,
+  ] = useState('');
+
+  const [
+    debouncedMinPrice,
+    setDebouncedMinPrice,
+  ] = useState('');
+
+  const [
+    debouncedMaxPrice,
+    setDebouncedMaxPrice,
+  ] = useState('');
+
+  const [
+    sortOption,
+    setSortOption,
+  ] = useState(
     'createdAt-desc'
   );
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 300);
+    const handler =
+      window.setTimeout(() => {
+        setDebouncedSearch(
+          searchTerm.trim()
+        );
+      }, FILTER_DEBOUNCE_MS);
 
-    return () => clearTimeout(handler);
+    return () => {
+      window.clearTimeout(
+        handler
+      );
+    };
   }, [searchTerm]);
 
-  const queryParams = useMemo(() => {
-    const params = {};
+  useEffect(() => {
+    const handler =
+      window.setTimeout(() => {
+        setDebouncedMinPrice(
+          minPrice
+        );
 
-    if (category) {
-      params.category = category;
-    }
+        setDebouncedMaxPrice(
+          maxPrice
+        );
+      }, FILTER_DEBOUNCE_MS);
 
-    if (debouncedSearch.trim()) {
-      params.search =
-        debouncedSearch.trim();
-    }
-
-    const [sortBy, order] =
-      sortOption.split('-');
-
-    if (sortBy && order) {
-      params.sortBy = sortBy;
-      params.order = order;
-    }
-
-    return params;
+    return () => {
+      window.clearTimeout(
+        handler
+      );
+    };
   }, [
-    category,
-    debouncedSearch,
-    sortOption,
+    minPrice,
+    maxPrice,
   ]);
+
+  const queryParams =
+    useMemo(() => {
+      const params =
+        {};
+
+      if (category) {
+        params.category =
+          category;
+      }
+
+      if (
+        debouncedSearch
+      ) {
+        params.search =
+          debouncedSearch;
+      }
+
+      if (
+        debouncedMinPrice !==
+        ''
+      ) {
+        params.minPrice =
+          debouncedMinPrice;
+      }
+
+      if (
+        debouncedMaxPrice !==
+        ''
+      ) {
+        params.maxPrice =
+          debouncedMaxPrice;
+      }
+
+      if (
+        availability
+      ) {
+        params.availability =
+          availability;
+      }
+
+      const [
+        sortBy,
+        order,
+      ] =
+        sortOption.split(
+          '-'
+        );
+
+      if (
+        sortBy &&
+        order
+      ) {
+        params.sortBy =
+          sortBy;
+
+        params.order =
+          order;
+      }
+
+      return params;
+    }, [
+      category,
+      debouncedSearch,
+      debouncedMinPrice,
+      debouncedMaxPrice,
+      availability,
+      sortOption,
+    ]);
 
   const {
     products = [],
@@ -87,31 +215,79 @@ const ProductsPage = () => {
     refreshing,
     error,
     refetch,
-  } = useProducts(queryParams);
+  } = useProducts(
+    queryParams
+  );
+
+  const hasActiveFilters =
+    Boolean(
+      searchTerm ||
+      category ||
+      availability ||
+      minPrice ||
+      maxPrice ||
+      sortOption !==
+        'createdAt-desc'
+    );
+
+  const handleClearFilters =
+    () => {
+      setSearchTerm('');
+      setDebouncedSearch('');
+
+      setCategory('');
+      setAvailability('');
+
+      setMinPrice('');
+      setMaxPrice('');
+
+      setDebouncedMinPrice('');
+      setDebouncedMaxPrice('');
+
+      setSortOption(
+        'createdAt-desc'
+      );
+    };
 
   return (
-    <main className={styles.page}>
+    <main
+      className={
+        styles.page
+      }
+    >
       <div
-        className={styles.filterBar}
+        className={
+          styles.filterBar
+        }
         role="search"
         aria-label="Filtros de productos"
       >
         <input
           type="search"
           placeholder="Buscar productos..."
-          value={searchTerm}
-          onChange={(event) =>
+          value={
+            searchTerm
+          }
+          onChange={(
+            event
+          ) =>
             setSearchTerm(
               event.target.value
             )
           }
-          className={styles.searchInput}
+          className={
+            styles.searchInput
+          }
           aria-label="Buscar productos"
         />
 
         <select
-          value={category}
-          onChange={(event) =>
+          value={
+            category
+          }
+          onChange={(
+            event
+          ) =>
             setCategory(
               event.target.value
             )
@@ -125,16 +301,20 @@ const ProductsPage = () => {
             Todas las categorías
           </option>
 
-          {CATEGORIES.map(
-            (currentCategory) => (
+          {CATEGORY_OPTIONS.map(
+            (
+              currentCategory
+            ) => (
               <option
-                key={currentCategory}
-                value={currentCategory}
+                key={
+                  currentCategory
+                }
+                value={
+                  currentCategory
+                }
               >
                 {
-                  CATEGORY_LABELS[
-                    currentCategory
-                  ]
+                  currentCategory
                 }
               </option>
             )
@@ -142,13 +322,90 @@ const ProductsPage = () => {
         </select>
 
         <select
-          value={sortOption}
-          onChange={(event) =>
+          value={
+            availability
+          }
+          onChange={(
+            event
+          ) =>
+            setAvailability(
+              event.target.value
+            )
+          }
+          className={
+            styles.categorySelect
+          }
+          aria-label="Filtrar por disponibilidad"
+        >
+          <option value="">
+            Toda disponibilidad
+          </option>
+
+          <option value="inStock">
+            Disponibles
+          </option>
+
+          <option value="outOfStock">
+            Agotados
+          </option>
+        </select>
+
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Precio mín."
+          value={
+            minPrice
+          }
+          onChange={(
+            event
+          ) =>
+            setMinPrice(
+              event.target.value
+            )
+          }
+          className={
+            styles.searchInput
+          }
+          aria-label="Precio mínimo"
+        />
+
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Precio máx."
+          value={
+            maxPrice
+          }
+          onChange={(
+            event
+          ) =>
+            setMaxPrice(
+              event.target.value
+            )
+          }
+          className={
+            styles.searchInput
+          }
+          aria-label="Precio máximo"
+        />
+
+        <select
+          value={
+            sortOption
+          }
+          onChange={(
+            event
+          ) =>
             setSortOption(
               event.target.value
             )
           }
-          className={styles.sortSelect}
+          className={
+            styles.sortSelect
+          }
           aria-label="Ordenar productos"
         >
           {SORT_OPTIONS.map(
@@ -157,16 +414,32 @@ const ProductsPage = () => {
                 key={`${option.sortBy}-${option.order}`}
                 value={`${option.sortBy}-${option.order}`}
               >
-                {option.label}
+                {
+                  option.label
+                }
               </option>
             )
           )}
         </select>
+
+        {hasActiveFilters && (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={
+              handleClearFilters
+            }
+          >
+            Limpiar
+          </Button>
+        )}
       </div>
 
       {refreshing && (
         <p
-          className={styles.refreshingState}
+          className={
+            styles.refreshingState
+          }
           role="status"
           aria-live="polite"
         >
@@ -176,7 +449,9 @@ const ProductsPage = () => {
 
       {loading && (
         <div
-          className={styles.state}
+          className={
+            styles.state
+          }
           role="status"
           aria-live="polite"
         >
@@ -186,14 +461,25 @@ const ProductsPage = () => {
         </div>
       )}
 
-      {!loading && error && (
-        <div className={styles.errorState}>
-          <p className={styles.errorMessage}>
+      {!loading &&
+        error && (
+        <div
+          className={
+            styles.errorState
+          }
+        >
+          <p
+            className={
+              styles.errorMessage
+            }
+          >
             {error}
           </p>
 
           <Button
-            onClick={refetch}
+            onClick={
+              refetch
+            }
             variant="primary"
           >
             Reintentar
@@ -203,17 +489,29 @@ const ProductsPage = () => {
 
       {!loading &&
         !error &&
-        products.length === 0 && (
-          <p className={styles.emptyState}>
-            No se encontraron productos.
-          </p>
-        )}
+        products.length ===
+          0 && (
+        <p
+          className={
+            styles.emptyState
+          }
+        >
+          No se encontraron
+          productos con los
+          filtros seleccionados.
+        </p>
+      )}
 
       {!loading &&
         !error &&
-        products.length > 0 && (
-          <ProductGrid products={products} />
-        )}
+        products.length >
+          0 && (
+        <ProductGrid
+          products={
+            products
+          }
+        />
+      )}
     </main>
   );
 };

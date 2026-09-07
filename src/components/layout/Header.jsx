@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import {
   Link,
   NavLink,
@@ -33,19 +34,28 @@ export const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [
+    isMenuOpen,
+    setIsMenuOpen,
+  ] = useState(false);
 
   const {
+    user,
     isAuthenticated,
     loading,
-  } = useSelector((state) => state.auth);
+  } = useSelector(
+    (state) => state.auth
+  );
 
   const cartItemCount = useSelector(
     selectCartItemCount
   );
 
   const toggleMenu = () => {
-    setIsMenuOpen((prevState) => !prevState);
+    setIsMenuOpen(
+      (prevState) =>
+        !prevState
+    );
   };
 
   const closeMenu = () => {
@@ -54,13 +64,18 @@ export const Header = () => {
 
   const handleLogout = async () => {
     try {
-      await dispatch(logoutUser()).unwrap();
+      await dispatch(
+        logoutUser()
+      ).unwrap();
 
       closeMenu();
 
-      navigate('/login', {
-        replace: true,
-      });
+      navigate(
+        '/login',
+        {
+          replace: true,
+        }
+      );
     } catch {
       return;
     }
@@ -68,10 +83,11 @@ export const Header = () => {
 
   const cartLabel =
     cartItemCount > 0
-      ? `Carrito, ${cartItemCount} ${cartItemCount === 1
-        ? 'producto'
-        : 'productos'
-      }`
+      ? `Carrito, ${cartItemCount} ${
+          cartItemCount === 1
+            ? 'producto'
+            : 'productos'
+        }`
       : 'Carrito';
 
   return (
@@ -100,21 +116,26 @@ export const Header = () => {
           to="/"
           className={styles.logo}
           onClick={closeMenu}
-          aria-label="Rilmar Tech - Inicio"
+          aria-label="RilmarTech - Inicio"
         >
           RILMAR<span>TECH</span>
         </Link>
 
         <nav
           id="main-navigation"
-          className={`${styles.navLinks} ${isMenuOpen ? styles.navOpen : ''
-            }`}
+          className={`${styles.navLinks} ${
+            isMenuOpen
+              ? styles.navOpen
+              : ''
+          }`}
           aria-label="Navegación principal"
         >
           <NavLink
             to="/"
             className={({ isActive }) =>
-              isActive ? styles.active : ''
+              isActive
+                ? styles.active
+                : ''
             }
             onClick={closeMenu}
           >
@@ -124,12 +145,28 @@ export const Header = () => {
           <NavLink
             to="/products"
             className={({ isActive }) =>
-              isActive ? styles.active : ''
+              isActive
+                ? styles.active
+                : ''
             }
             onClick={closeMenu}
           >
             Catálogo
           </NavLink>
+
+          {user?.role === 'ADMIN' && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                isActive
+                  ? styles.active
+                  : ''
+              }
+              onClick={closeMenu}
+            >
+              Admin
+            </NavLink>
+          )}
         </nav>
 
         <div className={styles.headerActions}>
