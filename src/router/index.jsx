@@ -16,6 +16,8 @@ import ProductsPage from '../pages/ProductsPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/ResetPasswordPage';
 import CartPage from '../pages/CartPage';
 import WishlistPage from '../pages/WishlistPage';
 import ProfilePage from '../pages/ProfilePage';
@@ -27,125 +29,186 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminProducts from '../pages/admin/AdminProducts';
 import AdminProductForm from '../pages/admin/AdminProductForm';
 
-const router = createBrowserRouter([
-  {
-    element: <Layout />,
+const router =
+  createBrowserRouter([
+    {
+      element:
+        <Layout />,
 
-    children: [
-      {
-        path: '/',
-        element: <HomePage />,
-      },
+      children: [
+        {
+          path:
+            '/',
 
-      {
-        path: '/products',
-        element: <ProductsPage />,
-      },
+          element:
+            <HomePage />,
+        },
 
-      {
-        path: '/products/:id',
-        element: <ProductDetailPage />,
-      },
+        {
+          path:
+            '/products',
 
-      {
-        element: <GuestRoute />,
+          element:
+            <ProductsPage />,
+        },
 
-        children: [
-          {
-            path: '/login',
-            element: <LoginPage />,
-          },
+        {
+          path:
+            '/products/:id',
 
-          {
-            path: '/register',
-            element: <RegisterPage />,
-          },
-        ],
-      },
+          element:
+            <ProductDetailPage />,
+        },
 
-      {
-        element: <ProtectedRoute />,
+        {
+          element:
+            <GuestRoute />,
 
-        children: [
-          {
-            path: '/cart',
-            element: <CartPage />,
-          },
+          children: [
+            {
+              path:
+                '/login',
 
-          {
-            path: '/wishlist',
-            element: <WishlistPage />,
-          },
+              element:
+                <LoginPage />,
+            },
 
-          {
-            path: '/profile',
-            element: <ProfilePage />,
-          },
+            {
+              path:
+                '/register',
 
-          {
-            path: '/checkout',
-            element: <CheckoutPage />,
-          },
+              element:
+                <RegisterPage />,
+            },
 
-          {
-            path: '/checkout/success',
-            element:
-              <CheckoutSuccessPage />,
-          },
-        ],
-      },
+            {
+              path:
+                '/forgot-password',
 
-      {
-        element: (
-          <ProtectedRoute
-            allowedRoles={[
-              'ADMIN',
-            ]}
-          />
-        ),
+              element:
+                <ForgotPasswordPage />,
+            },
 
-        children: [
-          {
-            path: '/admin',
-            element: <AdminLayout />,
+            {
+              path:
+                '/reset-password',
 
-            children: [
-              {
-                index: true,
-                element:
-                  <AdminDashboard />,
-              },
+              element:
+                <ResetPasswordPage />,
+            },
+          ],
+        },
 
-              {
-                path: 'products',
-                element:
-                  <AdminProducts />,
-              },
+        {
+          element:
+            <ProtectedRoute />,
 
-              {
-                path:
-                  'products/new',
-                element:
-                  <AdminProductForm />,
-              },
+          children: [
+            {
+              path:
+                '/cart',
 
-              {
-                path:
-                  'products/:id/edit',
-                element:
-                  <AdminProductForm />,
-              },
-            ],
-          },
-        ],
-      },
+              element:
+                <CartPage />,
+            },
 
-      {
-        path: '*',
-        element: <NotFoundPage />,
-      },
-    ],
-  },
-]);
+            {
+              path:
+                '/wishlist',
+
+              element:
+                <WishlistPage />,
+            },
+
+            {
+              path:
+                '/profile',
+
+              element:
+                <ProfilePage />,
+            },
+
+            {
+              path:
+                '/checkout',
+
+              element:
+                <CheckoutPage />,
+            },
+
+            {
+              path:
+                '/checkout/success',
+
+              element:
+                <CheckoutSuccessPage />,
+            },
+          ],
+        },
+
+        {
+          element: (
+            <ProtectedRoute
+              allowedRoles={[
+                'ADMIN',
+              ]}
+            />
+          ),
+
+          children: [
+            {
+              path:
+                '/admin',
+
+              element:
+                <AdminLayout />,
+
+              children: [
+                {
+                  index:
+                    true,
+
+                  element:
+                    <AdminDashboard />,
+                },
+
+                {
+                  path:
+                    'products',
+
+                  element:
+                    <AdminProducts />,
+                },
+
+                {
+                  path:
+                    'products/new',
+
+                  element:
+                    <AdminProductForm />,
+                },
+
+                {
+                  path:
+                    'products/:id/edit',
+
+                  element:
+                    <AdminProductForm />,
+                },
+              ],
+            },
+          ],
+        },
+
+        {
+          path:
+            '*',
+
+          element:
+            <NotFoundPage />,
+        },
+      ],
+    },
+  ]);
 
 export default router;

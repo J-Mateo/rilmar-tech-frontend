@@ -9,7 +9,9 @@
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background-color: #ffffff;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 4px 6px -1px
+    rgba(0, 0, 0, 0.05);
 }
 
 .title {
@@ -46,6 +48,11 @@
   gap: 1rem;
 }
 
+.forgotPassword {
+  margin-top: 0.6rem;
+  text-align: right;
+}
+
 .submitButton {
   width: 100%;
   margin-top: 0.5rem;
@@ -60,6 +67,7 @@
 
 .authLink {
   color: #000000;
+  font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
 }
@@ -70,14 +78,22 @@
 
 .authLink:focus-visible {
   border-radius: 2px;
-  outline: 3px solid rgba(15, 23, 42, 0.2);
+  outline:
+    3px solid
+    rgba(15, 23, 42, 0.2);
   outline-offset: 3px;
 }
 
 @media (max-width: 480px) {
   .page {
-    width: min(100% - 1.25rem, 420px);
-    padding: 1.5rem 0 3rem;
+    width:
+      min(
+        100% - 1.25rem,
+        420px
+      );
+
+    padding:
+      1.5rem 0 3rem;
   }
 
   .card {
