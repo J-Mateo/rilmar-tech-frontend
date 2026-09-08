@@ -2,6 +2,10 @@ import {
   useState,
 } from 'react';
 
+import {
+  Trash2,
+} from 'lucide-react';
+
 import styles from './ProductForm.module.css';
 
 const CATEGORY_OPTIONS = [
@@ -11,6 +15,8 @@ const CATEGORY_OPTIONS = [
   'Smart Home',
   'Audio',
 ];
+
+const MAX_IMAGES = 6;
 
 const createInitialForm = (
   product
@@ -51,9 +57,30 @@ const ProductForm = ({
   );
 
   const [
+    existingImages,
+    setExistingImages,
+  ] = useState(
+    () =>
+      Array.isArray(
+        product?.images
+      )
+        ? product.images
+        : []
+  );
+
+  const [
     images,
     setImages,
   ] = useState([]);
+
+  const [
+    imageError,
+    setImageError,
+  ] = useState('');
+
+  const totalImages =
+    existingImages.length +
+    images.length;
 
   const handleChange = (
     event
@@ -80,15 +107,62 @@ const ProductForm = ({
         event.target.files ?? []
       );
 
+    const availableSlots =
+      MAX_IMAGES -
+      existingImages.length;
+
+    if (
+      selectedFiles.length >
+      availableSlots
+    ) {
+      setImages([]);
+
+      setImageError(
+        `Puedes tener un máximo de ${MAX_IMAGES} imágenes en total.`
+      );
+
+      event.target.value =
+        '';
+
+      return;
+    }
+
     setImages(
       selectedFiles
     );
+
+    setImageError('');
+  };
+
+  const handleRemoveExistingImage = (
+    imageUrl
+  ) => {
+    setExistingImages(
+      (current) =>
+        current.filter(
+          (url) =>
+            url !== imageUrl
+        )
+    );
+
+    setImageError('');
   };
 
   const handleSubmit = (
     event
   ) => {
     event.preventDefault();
+
+    if (
+      totalImages >
+      MAX_IMAGES
+    ) {
+      setImageError(
+        `Puedes tener un máximo de ${MAX_IMAGES} imágenes en total.`
+      );
+
+      return;
+    }
 
     const formData =
       new FormData();
@@ -118,18 +192,14 @@ const ProductForm = ({
       form.stock
     );
 
-    if (
-      product?.images?.length
-    ) {
-      product.images.forEach(
-        (url) => {
-          formData.append(
-            'images',
-            url
-          );
-        }
-      );
-    }
+    existingImages.forEach(
+      (url) => {
+        formData.append(
+          'images',
+          url
+        );
+      }
+    );
 
     images.forEach(
       (file) => {
@@ -292,21 +362,37 @@ const ProductForm = ({
         />
 
         <p className={styles.help}>
-          Puedes seleccionar hasta 6 imágenes.
-          Se almacenarán mediante Cloudinary.
+          Puedes tener hasta {MAX_IMAGES}{' '}
+          imágenes por producto. Las nuevas
+          imágenes se almacenarán mediante
+          Cloudinary.
+        </p>
+
+        <p className={styles.help}>
+          {totalImages} / {MAX_IMAGES}{' '}
+          imágenes
         </p>
 
         {images.length > 0 && (
           <p className={styles.help}>
             {images.length}{' '}
             {images.length === 1
-              ? 'imagen seleccionada'
-              : 'imágenes seleccionadas'}
+              ? 'imagen nueva seleccionada'
+              : 'imágenes nuevas seleccionadas'}
           </p>
+        )}
+
+        {imageError && (
+          <div
+            className={styles.error}
+            role="alert"
+          >
+            {imageError}
+          </div>
         )}
       </div>
 
-      {product?.images?.length > 0 && (
+      {existingImages.length > 0 && (
         <div
           className={
             styles.currentImage
@@ -316,15 +402,52 @@ const ProductForm = ({
             Imágenes actuales
           </p>
 
-          {product.images.map(
-            (imageUrl) => (
-              <img
-                key={imageUrl}
-                src={imageUrl}
-                alt={product.name}
-              />
-            )
-          )}
+          <div
+            className={
+              styles.currentImagesGrid
+            }
+          >
+            {existingImages.map(
+              (imageUrl) => (
+                <div
+                  key={imageUrl}
+                  className={
+                    styles.currentImageItem
+                  }
+                >
+                  <img
+                    src={imageUrl}
+                    alt={product?.name ?? 'Producto'}
+                  />
+
+                  <button
+                    type="button"
+                    className={
+                      styles.removeImageButton
+                    }
+                    onClick={() =>
+                      handleRemoveExistingImage(
+                        imageUrl
+                      )
+                    }
+                    aria-label="Eliminar imagen del producto"
+                    title="Eliminar imagen"
+                  >
+                    <Trash2
+                      size={18}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+              )
+            )}
+          </div>
+
+          <p className={styles.help}>
+            Las imágenes eliminadas dejarán
+            de estar asociadas al producto
+            cuando guardes los cambios.
+          </p>
         </div>
       )}
 

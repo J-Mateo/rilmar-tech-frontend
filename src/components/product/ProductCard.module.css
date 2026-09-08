@@ -33,18 +33,22 @@
   position: relative;
 
   width: 100%;
-  height: 230px;
+  height: 195px;
 
   overflow: hidden;
 
-  background: #f8fafc;
+  background: #ffffff;
 }
 
 .imageLink {
-  display: block;
-
+  display: flex;
   width: 100%;
   height: 100%;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px;
 }
 
 .imageLink:focus-visible {
@@ -53,12 +57,12 @@
 }
 
 .productImage {
+  display: block;
+
   width: 100%;
   height: 100%;
 
-  display: block;
-
-  object-fit: cover;
+  object-fit: contain;
 
   transition:
     transform 0.35s ease,
@@ -66,7 +70,7 @@
 }
 
 .productCard:hover .productImage {
-  transform: scale(1.035);
+  transform: scale(1.025);
 }
 
 /* =========================================================
@@ -76,8 +80,8 @@
 .productBadge {
   position: absolute;
 
-  top: 14px;
-  left: 14px;
+  top: 12px;
+  left: 12px;
 
   padding: 5px 11px;
 
@@ -105,11 +109,11 @@
 .wishlistButton {
   position: absolute;
 
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
 
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
 
   display: inline-flex;
   align-items: center;
@@ -176,15 +180,15 @@
   flex: 1;
   flex-direction: column;
 
-  padding: 1.15rem 1.15rem 1.2rem;
+  padding: 1rem 1.05rem 1.1rem;
 }
 
 .productTitle {
-  margin: 0 0 1rem;
+  margin: 0 0 0.85rem;
 
   color: var(--color-text-main);
 
-  font-size: 1.08rem;
+  font-size: 1.02rem;
   font-weight: 750;
   line-height: 1.35;
 
@@ -227,7 +231,7 @@
 .productPrice {
   color: #0f172a;
 
-  font-size: 1.32rem;
+  font-size: 1.22rem;
   font-weight: 800;
 
   letter-spacing: -0.025em;
@@ -240,9 +244,9 @@
    ========================================================= */
 
 .cartButton {
-  min-height: 42px;
+  min-height: 40px;
 
-  padding: 0.55rem 0.8rem;
+  padding: 0.5rem 0.75rem;
 
   border: 1px solid #dbe3ec;
   border-radius: 10px;
@@ -252,7 +256,7 @@
   color: #0f172a;
 
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 700;
 
   display: inline-flex;
@@ -304,10 +308,10 @@
 
 .buyNowButton {
   width: 100%;
-  min-height: 46px;
+  min-height: 44px;
 
-  margin-top: 0.78rem;
-  padding: 0.78rem 1rem;
+  margin-top: 0.72rem;
+  padding: 0.7rem 1rem;
 
   border: 0;
   border-radius: 11px;
@@ -317,7 +321,7 @@
   color: #ffffff;
 
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 750;
 
   letter-spacing: -0.01em;
@@ -394,10 +398,10 @@
 
 .restockButton {
   width: 100%;
-  min-height: 46px;
+  min-height: 44px;
 
-  margin-top: 0.78rem;
-  padding: 0.78rem 1rem;
+  margin-top: 0.72rem;
+  padding: 0.7rem 1rem;
 
   display: inline-flex;
   align-items: center;
@@ -413,7 +417,7 @@
   color: #0f172a;
 
   font: inherit;
-  font-size: 0.87rem;
+  font-size: 0.85rem;
   font-weight: 750;
 
   cursor: pointer;
@@ -511,19 +515,23 @@
   }
 
   .productImageContainer {
-    height: 205px;
+    height: 185px;
+  }
+
+  .imageLink {
+    padding: 10px;
   }
 
   .productContent {
-    padding: 1rem;
+    padding: 0.95rem;
   }
 
   .productTitle {
-    margin-bottom: 0.9rem;
+    margin-bottom: 0.8rem;
   }
 
   .productPrice {
-    font-size: 1.18rem;
+    font-size: 1.16rem;
   }
 
   .purchaseRow {
@@ -539,7 +547,7 @@
 
   .buyNowButton,
   .restockButton {
-    min-height: 48px;
+    min-height: 46px;
   }
 }
 
