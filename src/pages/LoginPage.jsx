@@ -6,6 +6,7 @@ import {
 
 import {
   Link,
+  useLocation,
   useNavigate,
 } from 'react-router-dom';
 
@@ -34,6 +35,9 @@ const LoginPage = () => {
   const navigate =
     useNavigate();
 
+  const location =
+    useLocation();
+
   const emailInputRef =
     useRef(null);
 
@@ -58,15 +62,20 @@ const LoginPage = () => {
     setErrors,
   ] = useState({});
 
-  useEffect(() => {
-    emailInputRef
-      .current
-      ?.focus();
+  useEffect(
+    () => {
+      emailInputRef
+        .current
+        ?.focus();
 
-    dispatch(
-      clearAuthError()
-    );
-  }, [dispatch]);
+      dispatch(
+        clearAuthError()
+      );
+    },
+    [
+      dispatch,
+    ]
+  );
 
   const handleChange =
     (event) => {
@@ -138,23 +147,24 @@ const LoginPage = () => {
     };
 
   const handleSubmit =
-    async (event) => {
+    async (
+      event
+    ) => {
       event.preventDefault();
 
       if (!validate()) {
         return;
       }
 
-      const credentials =
-        {
-          email:
-            formData.email
-              .trim()
-              .toLowerCase(),
+      const credentials = {
+        email:
+          formData.email
+            .trim()
+            .toLowerCase(),
 
-          password:
-            formData.password,
-        };
+        password:
+          formData.password,
+      };
 
       try {
         await dispatch(
@@ -163,8 +173,15 @@ const LoginPage = () => {
           )
         ).unwrap();
 
+        const destination =
+          typeof location
+            .state?.from ===
+            'string'
+            ? location.state.from
+            : '/products';
+
         navigate(
-          '/products',
+          destination,
           {
             replace:
               true,
@@ -199,9 +216,7 @@ const LoginPage = () => {
             styles.subtitle
           }
         >
-          Accede a tu cuenta
-          para gestionar tus
-          compras
+          Accede a tu cuenta para gestionar tus compras
         </p>
 
         {apiError && (

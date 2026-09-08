@@ -6,7 +6,6 @@ import {
 
 import {
   Link,
-  useNavigate,
 } from 'react-router-dom';
 
 import {
@@ -45,9 +44,6 @@ const FALLBACK_IMAGE =
 const CheckoutPage = () => {
   const dispatch =
     useDispatch();
-
-  const navigate =
-    useNavigate();
 
   const cartItems =
     useSelector(
@@ -125,29 +121,52 @@ const CheckoutPage = () => {
       }
 
       try {
-        if (isBuyNow) {
-          await dispatch(
-            checkoutBuyNow({
-              productId:
-                buyNowItem
-                  .product.id,
+        let checkoutResult;
 
-              quantity:
-                buyNowItem
-                  .quantity,
-            })
-          ).unwrap();
+        if (isBuyNow) {
+          checkoutResult =
+            await dispatch(
+              checkoutBuyNow({
+                productId:
+                  buyNowItem
+                    .product.id,
+
+                quantity:
+                  buyNowItem
+                    .quantity,
+              })
+            ).unwrap();
         } else {
-          await dispatch(
-            checkoutCart()
-          ).unwrap();
+          checkoutResult =
+            await dispatch(
+              checkoutCart()
+            ).unwrap();
         }
 
-        navigate(
-          '/checkout/success',
-          {
-            replace: true,
-          }
+        const checkoutUrl =
+          checkoutResult
+            ?.checkoutUrl;
+
+        if (
+          typeof checkoutUrl !==
+            'string' ||
+          !checkoutUrl
+        ) {
+          throw new Error(
+            'Stripe Checkout URL is missing'
+          );
+        }
+
+        /*
+         * Stripe Checkout se abre en la
+         * misma pestaña.
+         *
+         * Stripe será quien nos devuelva a
+         * /checkout/success?session_id=...
+         * después del pago.
+         */
+        window.location.assign(
+          checkoutUrl
         );
       } catch {
         return;
@@ -251,8 +270,8 @@ const CheckoutPage = () => {
             }
           >
             {isBuyNow
-              ? 'Revisa el producto antes de confirmar la compra.'
-              : 'Revisa tu pedido antes de confirmar la compra.'}
+              ? 'Revisa el producto antes de continuar al pago seguro.'
+              : 'Revisa tu pedido antes de continuar al pago seguro.'}
           </p>
         </div>
 
@@ -487,7 +506,7 @@ const CheckoutPage = () => {
               checkoutLoading
             }
           >
-            Confirmar compra
+            Ir al pago seguro
           </Button>
 
           <Link

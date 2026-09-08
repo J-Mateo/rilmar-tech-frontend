@@ -1,9 +1,23 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import {
+  Navigate,
+  Outlet,
+  useLocation,
+} from 'react-router-dom';
+
+import {
+  useSelector,
+} from 'react-redux';
 
 const GuestRoute = () => {
-  const { isAuthenticated, isCheckingAuth } = useSelector(
-    (state) => state.auth
+  const location =
+    useLocation();
+
+  const {
+    isAuthenticated,
+    isCheckingAuth,
+  } = useSelector(
+    (state) =>
+      state.auth
   );
 
   if (isCheckingAuth) {
@@ -11,7 +25,23 @@ const GuestRoute = () => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/profile" replace />;
+    const requestedPath =
+      location.state?.from;
+
+    const destination =
+      typeof requestedPath ===
+        'string' &&
+      requestedPath.startsWith('/') &&
+      !requestedPath.startsWith('//')
+        ? requestedPath
+        : '/products';
+
+    return (
+      <Navigate
+        to={destination}
+        replace
+      />
+    );
   }
 
   return <Outlet />;
