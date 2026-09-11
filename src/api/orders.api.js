@@ -17,3 +17,19 @@ export const getOrderByIdApi = async (
 
   return response.data;
 };
+
+export const getAdminOrdersApi = async (
+  params = {},
+  options = {}
+) => {
+  const response =
+    await apiClient.get(
+      '/orders/admin',
+      {
+        params,
+        ...options,
+      }
+    );
+
+  return response.data;
+};

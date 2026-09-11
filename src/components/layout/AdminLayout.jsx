@@ -49,6 +49,32 @@ export const AdminLayout = () => {
           >
             Productos
           </NavLink>
+
+          <NavLink
+            to="/admin/orders"
+            className={({ isActive }) =>
+              `${styles.navLink} ${
+                isActive
+                  ? styles.active
+                  : ''
+              }`
+            }
+          >
+            Pedidos
+          </NavLink>
+
+          <NavLink
+            to="/admin/users"
+            className={({ isActive }) =>
+              `${styles.navLink} ${
+                isActive
+                  ? styles.active
+                  : ''
+              }`
+            }
+          >
+            Usuarios
+          </NavLink>
         </nav>
       </aside>
 
