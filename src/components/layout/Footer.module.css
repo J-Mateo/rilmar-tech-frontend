@@ -1,12 +1,152 @@
 .footer {
-  border-top: 1px solid #e2e8f0;
-  padding: 2rem 0;
-  margin-top: 4rem;
-  text-align: center;
-  color: #64748b;
-  font-size: 0.9rem;
+  width: 100%;
+  margin-top: 0;
+  background: #071426;
+  color: #cbd5e1;
 }
 
-.text {
+.inner {
+  width: min(100% - 2rem, 1200px);
+  margin: 0 auto;
+}
+
+.main {
+  display: grid;
+  grid-template-columns:
+    minmax(240px, 1.5fr)
+    minmax(140px, 0.7fr)
+    minmax(140px, 0.7fr)
+    minmax(220px, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  padding: clamp(3rem, 6vw, 4.5rem) 0;
+}
+
+.logo {
+  display: inline-block;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  text-decoration: none;
+}
+
+.logo span {
+  color: #60a5fa;
+}
+
+.tagline {
+  max-width: 270px;
+  margin: 1rem 0 0;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  line-height: 1.65;
+}
+
+.socials {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.4rem;
+}
+
+.socialIcon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid
+    rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  color: #cbd5e1;
+}
+
+.column,
+.about {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.column h2,
+.about h2 {
+  margin: 0 0 1rem;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.column a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.column a:hover {
+  color: #ffffff;
+}
+
+.about p {
+  max-width: 260px;
   margin: 0;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem 0;
+  border-top: 1px solid
+    rgba(255, 255, 255, 0.1);
+}
+
+.bottom p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.logo:focus-visible,
+.column a:focus-visible {
+  outline: 3px solid
+    rgba(96, 165, 250, 0.45);
+  outline-offset: 4px;
+}
+
+@media (max-width: 850px) {
+  .main {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .inner {
+    width: min(100% - 1.5rem, 1200px);
+  }
+
+  .main {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 3rem 0;
+  }
+
+  .bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .column a {
+    transition: none;
+  }
 }

@@ -4,58 +4,89 @@ import {
   useState,
 } from 'react';
 
-import { useProducts } from '../hooks/useProducts';
-import ProductGrid from '../components/product/ProductGrid';
-import Button from '../components/common/Button/Button';
+import {
+  Search,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react';
+
+import {
+  useSearchParams,
+} from 'react-router-dom';
+
+import {
+  useProducts,
+} from '../hooks/useProducts';
+
+import CatalogRow from '../components/catalog/CatalogRow';
+import CatalogProductCard from '../components/catalog/CatalogProductCard';
+
+import heroCatalogImage from '../assets/hero-catalogo.jpg';
+
 import styles from './ProductsPage.module.css';
 
 const CATEGORY_OPTIONS = [
+  'Audio',
+  'Smart Home',
   'Workspace',
   'Productividad',
   'Creatividad',
-  'Smart Home',
-  'Audio',
 ];
+
+const CATEGORY_DESCRIPTIONS = {
+  Audio:
+    'Sonido que te acompaña en cada momento.',
+  'Smart Home':
+    'Convierte tu hogar en un espacio más inteligente.',
+  Workspace:
+    'Potencia tu productividad donde estés.',
+  Productividad:
+    'Herramientas pensadas para aprovechar mejor tu tiempo.',
+  Creatividad:
+    'Tecnología para imaginar, crear y experimentar.',
+};
 
 const SORT_OPTIONS = [
   {
-    label:
-      'Más recientes',
-    sortBy:
-      'createdAt',
-    order:
-      'desc',
+    label: 'Más recientes',
+    value: 'createdAt-desc',
   },
   {
     label:
       'Precio: menor a mayor',
-    sortBy:
-      'price',
-    order:
-      'asc',
+    value: 'price-asc',
   },
   {
     label:
       'Precio: mayor a menor',
-    sortBy:
-      'price',
-    order:
-      'desc',
+    value: 'price-desc',
   },
   {
     label:
       'Disponibles primero',
-    sortBy:
-      'availability',
-    order:
-      'desc',
+    value:
+      'availability-desc',
   },
 ];
 
 const FILTER_DEBOUNCE_MS =
   350;
 
+const getValidCategory = (
+  value
+) =>
+  CATEGORY_OPTIONS.includes(
+    value
+  )
+    ? value
+    : '';
+
 const ProductsPage = () => {
+  const [
+    searchParams,
+    setSearchParams,
+  ] = useSearchParams();
+
   const [
     searchTerm,
     setSearchTerm,
@@ -64,11 +95,6 @@ const ProductsPage = () => {
   const [
     debouncedSearch,
     setDebouncedSearch,
-  ] = useState('');
-
-  const [
-    category,
-    setCategory,
   ] = useState('');
 
   const [
@@ -103,36 +129,54 @@ const ProductsPage = () => {
     'createdAt-desc'
   );
 
+  const [
+    filtersOpen,
+    setFiltersOpen,
+  ] = useState(false);
+
+  const category =
+    getValidCategory(
+      searchParams.get(
+        'category'
+      ) ?? ''
+    );
+
   useEffect(() => {
-    const handler =
-      window.setTimeout(() => {
-        setDebouncedSearch(
-          searchTerm.trim()
-        );
-      }, FILTER_DEBOUNCE_MS);
+    const timer =
+      window.setTimeout(
+        () => {
+          setDebouncedSearch(
+            searchTerm.trim()
+          );
+        },
+        FILTER_DEBOUNCE_MS
+      );
 
     return () => {
       window.clearTimeout(
-        handler
+        timer
       );
     };
   }, [searchTerm]);
 
   useEffect(() => {
-    const handler =
-      window.setTimeout(() => {
-        setDebouncedMinPrice(
-          minPrice
-        );
+    const timer =
+      window.setTimeout(
+        () => {
+          setDebouncedMinPrice(
+            minPrice
+          );
 
-        setDebouncedMaxPrice(
-          maxPrice
-        );
-      }, FILTER_DEBOUNCE_MS);
+          setDebouncedMaxPrice(
+            maxPrice
+          );
+        },
+        FILTER_DEBOUNCE_MS
+      );
 
     return () => {
       window.clearTimeout(
-        handler
+        timer
       );
     };
   }, [
@@ -142,8 +186,9 @@ const ProductsPage = () => {
 
   const queryParams =
     useMemo(() => {
-      const params =
-        {};
+      const params = {
+        limit: 50,
+      };
 
       if (category) {
         params.category =
@@ -155,6 +200,11 @@ const ProductsPage = () => {
       ) {
         params.search =
           debouncedSearch;
+      }
+
+      if (availability) {
+        params.availability =
+          availability;
       }
 
       if (
@@ -171,13 +221,6 @@ const ProductsPage = () => {
       ) {
         params.maxPrice =
           debouncedMaxPrice;
-      }
-
-      if (
-        availability
-      ) {
-        params.availability =
-          availability;
       }
 
       const [
@@ -203,9 +246,9 @@ const ProductsPage = () => {
     }, [
       category,
       debouncedSearch,
+      availability,
       debouncedMinPrice,
       debouncedMaxPrice,
-      availability,
       sortOption,
     ]);
 
@@ -215,39 +258,127 @@ const ProductsPage = () => {
     refreshing,
     error,
     refetch,
-  } = useProducts(
-    queryParams
-  );
-
-  const hasActiveFilters =
-    Boolean(
-      searchTerm ||
-      category ||
-      availability ||
-      minPrice ||
-      maxPrice ||
-      sortOption !==
-        'createdAt-desc'
+  } =
+    useProducts(
+      queryParams
     );
 
-  const handleClearFilters =
+  const hasFiltering =
+    Boolean(
+      category ||
+        debouncedSearch ||
+        availability ||
+        debouncedMinPrice !==
+          '' ||
+        debouncedMaxPrice !==
+          ''
+    );
+
+  const activeFilterCount =
+    [
+      category,
+      availability,
+      minPrice,
+      maxPrice,
+    ].filter(Boolean)
+      .length;
+
+  const productsByCategory =
+    useMemo(() => {
+      if (hasFiltering) {
+        return {};
+      }
+
+      return CATEGORY_OPTIONS.reduce(
+        (
+          groups,
+          currentCategory
+        ) => {
+          groups[
+            currentCategory
+          ] =
+            products.filter(
+              (product) =>
+                product.category ===
+                currentCategory
+            );
+
+          return groups;
+        },
+        {}
+      );
+    }, [
+      products,
+      hasFiltering,
+    ]);
+
+  const updateCategory =
+    (nextCategory) => {
+      const nextParams =
+        new URLSearchParams(
+          searchParams
+        );
+
+      if (nextCategory) {
+        nextParams.set(
+          'category',
+          nextCategory
+        );
+      } else {
+        nextParams.delete(
+          'category'
+        );
+      }
+
+      setSearchParams(
+        nextParams,
+        {
+          replace: true,
+        }
+      );
+    };
+
+  const clearSearch =
     () => {
       setSearchTerm('');
-      setDebouncedSearch('');
 
-      setCategory('');
+      setDebouncedSearch(
+        ''
+      );
+    };
+
+  const clearFilters =
+    () => {
       setAvailability('');
 
       setMinPrice('');
       setMaxPrice('');
 
-      setDebouncedMinPrice('');
-      setDebouncedMaxPrice('');
+      setDebouncedMinPrice(
+        ''
+      );
+
+      setDebouncedMaxPrice(
+        ''
+      );
 
       setSortOption(
         'createdAt-desc'
       );
+
+      updateCategory('');
     };
+
+  const clearEverything =
+    () => {
+      clearSearch();
+      clearFilters();
+    };
+
+  const resultLabel =
+    products.length === 1
+      ? '1 producto'
+      : `${products.length} productos`;
 
   return (
     <main
@@ -255,263 +386,872 @@ const ProductsPage = () => {
         styles.page
       }
     >
-      <div
+      <section
         className={
-          styles.filterBar
+          styles.hero
         }
-        role="search"
-        aria-label="Filtros de productos"
       >
-        <input
-          type="search"
-          placeholder="Buscar productos..."
-          value={
-            searchTerm
+        <img
+          src={
+            heroCatalogImage
           }
-          onChange={(
-            event
-          ) =>
-            setSearchTerm(
-              event.target.value
-            )
-          }
+          alt=""
           className={
-            styles.searchInput
+            styles.heroImage
           }
-          aria-label="Buscar productos"
+          aria-hidden="true"
         />
 
-        <select
-          value={
-            category
-          }
-          onChange={(
-            event
-          ) =>
-            setCategory(
-              event.target.value
-            )
-          }
+        <div
           className={
-            styles.categorySelect
+            styles.heroOverlay
           }
-          aria-label="Filtrar por categoría"
+          aria-hidden="true"
+        />
+
+        <div
+          className={
+            styles.heroContent
+          }
         >
-          <option value="">
-            Todas las categorías
-          </option>
+          <p
+            className={
+              styles.heroEyebrow
+            }
+          >
+            Catálogo
+          </p>
+
+          <h1
+            className={
+              styles.heroTitle
+            }
+          >
+            Tecnología elegida
+            <br />
+            para tu día a día.
+          </h1>
+
+          <p
+            className={
+              styles.heroDescription
+            }
+          >
+            Una selección de
+            productos para
+            trabajar, crear,
+            disfrutar y vivir
+            mejor.
+          </p>
+        </div>
+
+        <div
+          className={
+            styles.searchBox
+          }
+          role="search"
+        >
+          <Search
+            size={19}
+            aria-hidden="true"
+          />
+
+          <input
+            type="search"
+            value={
+              searchTerm
+            }
+            onChange={(
+              event
+            ) =>
+              setSearchTerm(
+                event.target
+                  .value
+              )
+            }
+            placeholder="Buscar productos..."
+            aria-label="Buscar productos"
+          />
+
+          {searchTerm && (
+            <button
+              type="button"
+              className={
+                styles.searchClear
+              }
+              onClick={
+                clearSearch
+              }
+              aria-label="Limpiar búsqueda"
+            >
+              <X
+                size={17}
+                aria-hidden="true"
+              />
+            </button>
+          )}
+        </div>
+      </section>
+
+      <section
+        className={
+          styles.catalogControls
+        }
+        aria-label="Categorías y filtros"
+      >
+        <div
+          className={
+            styles.categoryScroller
+          }
+        >
+          <button
+            type="button"
+            className={`${styles.categoryChip} ${
+              !category
+                ? styles.categoryChipActive
+                : ''
+            }`}
+            onClick={() =>
+              updateCategory('')
+            }
+          >
+            Todos
+          </button>
 
           {CATEGORY_OPTIONS.map(
             (
               currentCategory
             ) => (
-              <option
+              <button
                 key={
                   currentCategory
                 }
-                value={
+                type="button"
+                className={`${styles.categoryChip} ${
+                  category ===
                   currentCategory
+                    ? styles.categoryChipActive
+                    : ''
+                }`}
+                onClick={() =>
+                  updateCategory(
+                    currentCategory
+                  )
                 }
               >
                 {
                   currentCategory
                 }
-              </option>
+              </button>
             )
           )}
-        </select>
+        </div>
 
-        <select
-          value={
-            availability
-          }
-          onChange={(
-            event
-          ) =>
-            setAvailability(
-              event.target.value
+        <button
+          type="button"
+          className={`${styles.filtersButton} ${
+            filtersOpen
+              ? styles.filtersButtonActive
+              : ''
+          }`}
+          onClick={() =>
+            setFiltersOpen(
+              (current) =>
+                !current
             )
           }
-          className={
-            styles.categorySelect
+          aria-expanded={
+            filtersOpen
           }
-          aria-label="Filtrar por disponibilidad"
         >
-          <option value="">
-            Toda disponibilidad
-          </option>
+          <SlidersHorizontal
+            size={17}
+            aria-hidden="true"
+          />
 
-          <option value="inStock">
-            Disponibles
-          </option>
+          Filtros
 
-          <option value="outOfStock">
-            Agotados
-          </option>
-        </select>
-
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="Precio mín."
-          value={
-            minPrice
-          }
-          onChange={(
-            event
-          ) =>
-            setMinPrice(
-              event.target.value
-            )
-          }
-          className={
-            styles.searchInput
-          }
-          aria-label="Precio mínimo"
-        />
-
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="Precio máx."
-          value={
-            maxPrice
-          }
-          onChange={(
-            event
-          ) =>
-            setMaxPrice(
-              event.target.value
-            )
-          }
-          className={
-            styles.searchInput
-          }
-          aria-label="Precio máximo"
-        />
-
-        <select
-          value={
-            sortOption
-          }
-          onChange={(
-            event
-          ) =>
-            setSortOption(
-              event.target.value
-            )
-          }
-          className={
-            styles.sortSelect
-          }
-          aria-label="Ordenar productos"
-        >
-          {SORT_OPTIONS.map(
-            (option) => (
-              <option
-                key={`${option.sortBy}-${option.order}`}
-                value={`${option.sortBy}-${option.order}`}
-              >
-                {
-                  option.label
-                }
-              </option>
-            )
+          {activeFilterCount >
+            0 && (
+            <span
+              className={
+                styles.filtersCount
+              }
+            >
+              {
+                activeFilterCount
+              }
+            </span>
           )}
-        </select>
+        </button>
+      </section>
 
-        {hasActiveFilters && (
-          <Button
+      {filtersOpen && (
+        <>
+          <button
             type="button"
-            variant="secondary"
-            onClick={
-              handleClearFilters
+            className={
+              styles.filterBackdrop
             }
+            onClick={() =>
+              setFiltersOpen(
+                false
+              )
+            }
+            aria-label="Cerrar filtros"
+          />
+
+          <section
+            className={
+              styles.filtersPanel
+            }
+            aria-label="Filtros de productos"
           >
-            Limpiar
-          </Button>
-        )}
-      </div>
+            <div
+              className={
+                styles.filtersPanelHeader
+              }
+            >
+              <div>
+                <p>
+                  Personaliza tu
+                  búsqueda
+                </p>
+
+                <h2>
+                  Filtros
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                className={
+                  styles.closeFilters
+                }
+                onClick={() =>
+                  setFiltersOpen(
+                    false
+                  )
+                }
+                aria-label="Cerrar filtros"
+              >
+                <X
+                  size={20}
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+
+            <div
+              className={
+                styles.filterFields
+              }
+            >
+              <label
+                className={`${styles.filterField} ${styles.categoryFilterField}`}
+              >
+                <span>
+                  Categoría
+                </span>
+
+                <select
+                  value={
+                    category
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    updateCategory(
+                      event.target
+                        .value
+                    )
+                  }
+                >
+                  <option value="">
+                    Todas las categorías
+                  </option>
+
+                  {CATEGORY_OPTIONS.map(
+                    (
+                      currentCategory
+                    ) => (
+                      <option
+                        key={
+                          currentCategory
+                        }
+                        value={
+                          currentCategory
+                        }
+                      >
+                        {
+                          currentCategory
+                        }
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+
+              <label
+                className={
+                  styles.filterField
+                }
+              >
+                <span>
+                  Disponibilidad
+                </span>
+
+                <select
+                  value={
+                    availability
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setAvailability(
+                      event.target
+                        .value
+                    )
+                  }
+                >
+                  <option value="">
+                    Todos
+                  </option>
+
+                  <option value="inStock">
+                    Disponibles
+                  </option>
+
+                  <option value="outOfStock">
+                    Agotados
+                  </option>
+                </select>
+              </label>
+
+              <label
+                className={
+                  styles.filterField
+                }
+              >
+                <span>
+                  Precio desde
+                </span>
+
+                <div
+                  className={
+                    styles.priceInput
+                  }
+                >
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={
+                      minPrice
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setMinPrice(
+                        event.target
+                          .value
+                      )
+                    }
+                    placeholder="0"
+                  />
+
+                  <span>
+                    €
+                  </span>
+                </div>
+              </label>
+
+              <label
+                className={
+                  styles.filterField
+                }
+              >
+                <span>
+                  Precio hasta
+                </span>
+
+                <div
+                  className={
+                    styles.priceInput
+                  }
+                >
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={
+                      maxPrice
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setMaxPrice(
+                        event.target
+                          .value
+                      )
+                    }
+                    placeholder="Máx."
+                  />
+
+                  <span>
+                    €
+                  </span>
+                </div>
+              </label>
+
+              <label
+                className={
+                  styles.filterField
+                }
+              >
+                <span>
+                  Ordenar por
+                </span>
+
+                <select
+                  value={
+                    sortOption
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setSortOption(
+                      event.target
+                        .value
+                    )
+                  }
+                >
+                  {SORT_OPTIONS.map(
+                    (option) => (
+                      <option
+                        key={
+                          option.value
+                        }
+                        value={
+                          option.value
+                        }
+                      >
+                        {
+                          option.label
+                        }
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+            </div>
+
+            <div
+              className={
+                styles.filterActions
+              }
+            >
+              <button
+                type="button"
+                className={
+                  styles.clearFiltersButton
+                }
+                onClick={
+                  clearFilters
+                }
+              >
+                Limpiar filtros
+              </button>
+
+              <button
+                type="button"
+                className={
+                  styles.applyFiltersButton
+                }
+                onClick={() =>
+                  setFiltersOpen(
+                    false
+                  )
+                }
+              >
+                Ver {resultLabel}
+              </button>
+            </div>
+          </section>
+        </>
+      )}
 
       {refreshing && (
         <p
           className={
-            styles.refreshingState
+            styles.refreshing
           }
           role="status"
-          aria-live="polite"
         >
-          Actualizando productos...
+          Actualizando
+          resultados...
         </p>
       )}
 
       {loading && (
-        <div
+        <section
           className={
             styles.state
           }
-          role="status"
-          aria-live="polite"
         >
+          <span
+            className={
+              styles.loader
+            }
+          />
+
           <p>
-            Cargando catálogo de productos...
+            Cargando catálogo...
           </p>
-        </div>
+        </section>
       )}
 
       {!loading &&
         error && (
-        <div
-          className={
-            styles.errorState
-          }
-        >
-          <p
+          <section
             className={
-              styles.errorMessage
+              styles.state
             }
           >
-            {error}
-          </p>
+            <h2>
+              No hemos podido
+              cargar el catálogo
+            </h2>
 
-          <Button
-            onClick={
-              refetch
-            }
-            variant="primary"
-          >
-            Reintentar
-          </Button>
-        </div>
-      )}
+            <p>
+              {error}
+            </p>
+
+            <button
+              type="button"
+              className={
+                styles.stateButton
+              }
+              onClick={
+                refetch
+              }
+            >
+              Reintentar
+            </button>
+          </section>
+        )}
 
       {!loading &&
         !error &&
-        products.length ===
-          0 && (
-        <p
-          className={
-            styles.emptyState
-          }
-        >
-          No se encontraron
-          productos con los
-          filtros seleccionados.
-        </p>
-      )}
+        !hasFiltering && (
+          <div
+            className={
+              styles.discovery
+            }
+          >
+            {CATEGORY_OPTIONS.map(
+              (
+                currentCategory
+              ) => {
+                const categoryProducts =
+                  productsByCategory[
+                    currentCategory
+                  ] ?? [];
+
+                if (
+                  !categoryProducts.length
+                ) {
+                  return null;
+                }
+
+                return (
+                  <CatalogRow
+                    key={
+                      currentCategory
+                    }
+                    title={
+                      currentCategory
+                    }
+                    description={
+                      CATEGORY_DESCRIPTIONS[
+                        currentCategory
+                      ]
+                    }
+                    products={
+                      categoryProducts
+                    }
+                    onViewAll={() =>
+                      updateCategory(
+                        currentCategory
+                      )
+                    }
+                  />
+                );
+              }
+            )}
+          </div>
+        )}
 
       {!loading &&
         !error &&
-        products.length >
-          0 && (
-        <ProductGrid
-          products={
-            products
-          }
-        />
-      )}
+        hasFiltering && (
+          <section
+            className={
+              styles.filteredSection
+            }
+          >
+            <div
+              className={
+                styles.filteredHeader
+              }
+            >
+              <div>
+                <p
+                  className={
+                    styles.filteredEyebrow
+                  }
+                >
+                  {category ||
+                    'Resultados'}
+                </p>
+
+                <h2>
+                  {category ||
+                    (debouncedSearch
+                      ? `Resultados para “${debouncedSearch}”`
+                      : 'Productos')}
+                </h2>
+
+                <p
+                  className={
+                    styles.filteredCount
+                  }
+                >
+                  {resultLabel}
+                </p>
+              </div>
+
+              <label
+                className={
+                  styles.inlineSort
+                }
+              >
+                <span>
+                  Ordenar por
+                </span>
+
+                <select
+                  value={
+                    sortOption
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setSortOption(
+                      event.target
+                        .value
+                    )
+                  }
+                >
+                  {SORT_OPTIONS.map(
+                    (option) => (
+                      <option
+                        key={
+                          option.value
+                        }
+                        value={
+                          option.value
+                        }
+                      >
+                        {
+                          option.label
+                        }
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+            </div>
+
+            {(category ||
+              availability ||
+              minPrice ||
+              maxPrice ||
+              debouncedSearch) && (
+              <div
+                className={
+                  styles.activeFilters
+                }
+              >
+                {debouncedSearch && (
+                  <button
+                    type="button"
+                    onClick={
+                      clearSearch
+                    }
+                  >
+                    “{debouncedSearch}”
+
+                    <X
+                      size={13}
+                      aria-hidden="true"
+                    />
+                  </button>
+                )}
+
+                {category && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateCategory(
+                        ''
+                      )
+                    }
+                  >
+                    {category}
+
+                    <X
+                      size={13}
+                      aria-hidden="true"
+                    />
+                  </button>
+                )}
+
+                {availability && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAvailability(
+                        ''
+                      )
+                    }
+                  >
+                    {availability ===
+                    'inStock'
+                      ? 'Disponibles'
+                      : 'Agotados'}
+
+                    <X
+                      size={13}
+                      aria-hidden="true"
+                    />
+                  </button>
+                )}
+
+                {minPrice && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMinPrice(
+                        ''
+                      );
+
+                      setDebouncedMinPrice(
+                        ''
+                      );
+                    }}
+                  >
+                    Desde {minPrice} €
+
+                    <X
+                      size={13}
+                      aria-hidden="true"
+                    />
+                  </button>
+                )}
+
+                {maxPrice && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMaxPrice(
+                        ''
+                      );
+
+                      setDebouncedMaxPrice(
+                        ''
+                      );
+                    }}
+                  >
+                    Hasta {maxPrice} €
+
+                    <X
+                      size={13}
+                      aria-hidden="true"
+                    />
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className={
+                    styles.clearAllChip
+                  }
+                  onClick={
+                    clearEverything
+                  }
+                >
+                  Limpiar todo
+                </button>
+              </div>
+            )}
+
+            {products.length >
+            0 ? (
+              <div
+                className={
+                  styles.filteredGrid
+                }
+              >
+                {products.map(
+                  (product) => (
+                    <CatalogProductCard
+                      key={
+                        product.id
+                      }
+                      product={
+                        product
+                      }
+                    />
+                  )
+                )}
+              </div>
+            ) : (
+              <div
+                className={
+                  styles.emptyState
+                }
+              >
+                <Search
+                  size={26}
+                  aria-hidden="true"
+                />
+
+                <h3>
+                  No encontramos
+                  productos
+                </h3>
+
+                <p>
+                  Prueba con otra
+                  búsqueda o modifica
+                  alguno de los
+                  filtros.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={
+                    clearEverything
+                  }
+                >
+                  Ver todos los
+                  productos
+                </button>
+              </div>
+            )}
+          </section>
+        )}
     </main>
   );
 };

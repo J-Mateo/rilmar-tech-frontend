@@ -1,4 +1,8 @@
 import {
+  Suspense,
+} from 'react';
+
+import {
   createBrowserRouter,
 } from 'react-router-dom';
 
@@ -8,48 +12,80 @@ import {
 
 import ProtectedRoute from '../components/common/ProtectedRoute/ProtectedRoute';
 import GuestRoute from '../components/common/GuestRoute/GuestRoute';
-
-import AdminLayout from '../components/layout/AdminLayout';
+import ScrollToTop from '../components/common/ScrollToTop/ScrollToTop';
 
 import HomePage from '../pages/HomePage';
-import ProductsPage from '../pages/ProductsPage';
-import ProductDetailPage from '../pages/ProductDetailPage';
-import LoginPage from '../pages/LoginPage';
-import RegisterPage from '../pages/RegisterPage';
-import ForgotPasswordPage from '../pages/ForgotPasswordPage';
-import ResetPasswordPage from '../pages/ResetPasswordPage';
-import CartPage from '../pages/CartPage';
-import WishlistPage from '../pages/WishlistPage';
-import ProfilePage from '../pages/ProfilePage';
-import CheckoutPage from '../pages/CheckoutPage';
-import CheckoutSuccessPage from '../pages/CheckoutSuccessPage';
-import NotFoundPage from '../pages/NotFoundPage';
 
-import AdminDashboard from '../pages/admin/AdminDashboard';
-import AdminProducts from '../pages/admin/AdminProducts';
-import AdminProductForm from '../pages/admin/AdminProductForm';
+import {
+  AboutPage,
+  ProductsPage,
+  ProductDetailPage,
+  LoginPage,
+  RegisterPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  CartPage,
+  WishlistPage,
+  ProfilePage,
+  CheckoutPage,
+  CheckoutSuccessPage,
+  NotFoundPage,
+  AdminLayout,
+  AdminDashboard,
+  AdminProducts,
+  AdminProductForm,
+  AdminOrders,
+  AdminUsers,
+} from './lazyPages';
+
+import LoadingRoute from './LoadingRoute';
+
+const lazyElement = (
+  element
+) => (
+  <Suspense
+    fallback={
+      <LoadingRoute />
+    }
+  >
+    {element}
+  </Suspense>
+);
 
 const router =
   createBrowserRouter([
     {
-      element:
-        <Layout />,
+      element: (
+        <>
+          <ScrollToTop />
+          <Layout />
+        </>
+      ),
 
       children: [
         {
-          path:
-            '/',
+          path: '/',
 
           element:
             <HomePage />,
         },
 
         {
-          path:
-            '/products',
+          path: '/about',
 
           element:
-            <ProductsPage />,
+            lazyElement(
+              <AboutPage />
+            ),
+        },
+
+        {
+          path: '/products',
+
+          element:
+            lazyElement(
+              <ProductsPage />
+            ),
         },
 
         {
@@ -57,7 +93,19 @@ const router =
             '/products/:id',
 
           element:
-            <ProductDetailPage />,
+            lazyElement(
+              <ProductDetailPage />
+            ),
+        },
+
+
+        {
+          path: '/cart',
+
+          element:
+            lazyElement(
+              <CartPage />
+            ),
         },
 
         {
@@ -66,19 +114,21 @@ const router =
 
           children: [
             {
-              path:
-                '/login',
+              path: '/login',
 
               element:
-                <LoginPage />,
+                lazyElement(
+                  <LoginPage />
+                ),
             },
 
             {
-              path:
-                '/register',
+              path: '/register',
 
               element:
-                <RegisterPage />,
+                lazyElement(
+                  <RegisterPage />
+                ),
             },
 
             {
@@ -86,7 +136,9 @@ const router =
                 '/forgot-password',
 
               element:
-                <ForgotPasswordPage />,
+                lazyElement(
+                  <ForgotPasswordPage />
+                ),
             },
 
             {
@@ -94,7 +146,9 @@ const router =
                 '/reset-password',
 
               element:
-                <ResetPasswordPage />,
+                lazyElement(
+                  <ResetPasswordPage />
+                ),
             },
           ],
         },
@@ -106,18 +160,12 @@ const router =
           children: [
             {
               path:
-                '/cart',
-
-              element:
-                <CartPage />,
-            },
-
-            {
-              path:
                 '/wishlist',
 
               element:
-                <WishlistPage />,
+                lazyElement(
+                  <WishlistPage />
+                ),
             },
 
             {
@@ -125,7 +173,9 @@ const router =
                 '/profile',
 
               element:
-                <ProfilePage />,
+                lazyElement(
+                  <ProfilePage />
+                ),
             },
 
             {
@@ -133,7 +183,9 @@ const router =
                 '/checkout',
 
               element:
-                <CheckoutPage />,
+                lazyElement(
+                  <CheckoutPage />
+                ),
             },
 
             {
@@ -141,7 +193,9 @@ const router =
                 '/checkout/success',
 
               element:
-                <CheckoutSuccessPage />,
+                lazyElement(
+                  <CheckoutSuccessPage />
+                ),
             },
           ],
         },
@@ -157,27 +211,30 @@ const router =
 
           children: [
             {
-              path:
-                '/admin',
+              path: '/admin',
 
               element:
-                <AdminLayout />,
+                lazyElement(
+                  <AdminLayout />
+                ),
 
               children: [
                 {
-                  index:
-                    true,
+                  index: true,
 
                   element:
-                    <AdminDashboard />,
+                    lazyElement(
+                      <AdminDashboard />
+                    ),
                 },
 
                 {
-                  path:
-                    'products',
+                  path: 'products',
 
                   element:
-                    <AdminProducts />,
+                    lazyElement(
+                      <AdminProducts />
+                    ),
                 },
 
                 {
@@ -185,7 +242,9 @@ const router =
                     'products/new',
 
                   element:
-                    <AdminProductForm />,
+                    lazyElement(
+                      <AdminProductForm />
+                    ),
                 },
 
                 {
@@ -193,7 +252,27 @@ const router =
                     'products/:id/edit',
 
                   element:
-                    <AdminProductForm />,
+                    lazyElement(
+                      <AdminProductForm />
+                    ),
+                },
+
+                {
+                  path: 'orders',
+
+                  element:
+                    lazyElement(
+                      <AdminOrders />
+                    ),
+                },
+
+                {
+                  path: 'users',
+
+                  element:
+                    lazyElement(
+                      <AdminUsers />
+                    ),
                 },
               ],
             },
@@ -201,14 +280,16 @@ const router =
         },
 
         {
-          path:
-            '*',
+          path: '*',
 
           element:
-            <NotFoundPage />,
+            lazyElement(
+              <NotFoundPage />
+            ),
         },
       ],
     },
   ]);
 
 export default router;
+

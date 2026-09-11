@@ -1,4 +1,9 @@
 import {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
   Bell,
   BellRing,
   Heart,
@@ -7,9 +12,10 @@ import {
 } from 'lucide-react';
 
 import {
-  useEffect,
-  useState,
-} from 'react';
+  Link,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 
 import {
   useDispatch,
@@ -17,10 +23,10 @@ import {
 } from 'react-redux';
 
 import {
-  Link,
-  useLocation,
-  useNavigate,
-} from 'react-router-dom';
+  cancelRestockAlertApi,
+  getRestockAlertApi,
+  subscribeRestockAlertApi,
+} from '../../api/products.api';
 
 import {
   addCartItem,
@@ -32,16 +38,9 @@ import {
   toggleWishlistProduct,
 } from '../../store/slices/wishlistSlice';
 
-import {
-  cancelRestockAlertApi,
-  getRestockAlertApi,
-  subscribeRestockAlertApi,
-} from '../../api/products.api';
+import formatCurrency from '../../utils/formatCurrency';
 
 import styles from './ProductCard.module.css';
-
-const FALLBACK_IMAGE =
-  'https://via.placeholder.com/400x300?text=Sin+imagen';
 
 const ProductCard = ({
   product,
@@ -55,6 +54,32 @@ const ProductCard = ({
   const location =
     useLocation();
 
+  const isAuthenticated =
+    useSelector(
+      (state) =>
+        state.auth.isAuthenticated
+    );
+
+  const cartMutationLoading =
+    useSelector(
+      selectCartMutationLoading
+    );
+
+  const isWishlist =
+    useSelector(
+      (state) =>
+        state.wishlist.productIds.includes(
+          String(product.id)
+        )
+    );
+
+  const isTogglingWishlist =
+    useSelector(
+      (state) =>
+        state.wishlist.togglingProductId ===
+        String(product.id)
+    );
+
   const [
     activeCartAction,
     setActiveCartAction,
@@ -66,13 +91,13 @@ const ProductCard = ({
   ] = useState(false);
 
   const [
-    restockLoading,
-    setRestockLoading,
+    restockInitialized,
+    setRestockInitialized,
   ] = useState(false);
 
   const [
-    restockInitialized,
-    setRestockInitialized,
+    restockLoading,
+    setRestockLoading,
   ] = useState(false);
 
   const [
@@ -80,102 +105,53 @@ const ProductCard = ({
     setRestockError,
   ] = useState('');
 
-  const {
-    isAuthenticated,
-  } = useSelector(
-    (state) => state.auth
-  );
-
-  const {
-    productIds,
-    togglingProductId,
-  } = useSelector(
-    (state) =>
-      state.wishlist
-  );
-
-  const cartMutationLoading =
-    useSelector(
-      selectCartMutationLoading
-    );
-
-  const mainImage =
+  const productImages =
     Array.isArray(
       product.images
-    ) &&
-    product.images.length > 0
-      ? product.images[0]
-      : FALLBACK_IMAGE;
+    )
+      ? product.images.filter(
+          Boolean
+        )
+      : [];
 
-  const productId =
-    String(product.id);
-
-  const isWishlist =
-    productIds.includes(
-      productId
-    );
-
-  const isTogglingWishlist =
-    String(
-      togglingProductId
-    ) === productId;
-
-  const stock =
-    Number(
-      product.stock ?? 0
-    );
+  const mainImage =
+    productImages[0] ||
+    product.image ||
+    '/placeholder-product.png';
 
   const isOutOfStock =
-    stock <= 0;
+    Number(product.stock) <= 0;
 
   const isAddingToCart =
-    cartMutationLoading &&
     activeCartAction ===
-      'cart';
-
-  const redirectToLogin =
-    () => {
-      navigate('/login', {
-        state: {
-          from:
-            location.pathname,
-        },
-      });
-    };
+    'cart';
 
   useEffect(() => {
-    let cancelled = false;
+    if (
+      !isAuthenticated ||
+      !isOutOfStock
+    ) {
+      return;
+    }
+
+    const controller =
+      new AbortController();
 
     const loadRestockAlert =
       async () => {
-        if (
-          !isOutOfStock ||
-          !isAuthenticated
-        ) {
-          setRestockSubscribed(
-            false
-          );
-
-          setRestockInitialized(
-            true
-          );
-
-          return;
-        }
-
-        setRestockInitialized(
-          false
-        );
-
-        setRestockError('');
-
         try {
           const response =
             await getRestockAlertApi(
-              product.id
+              product.id,
+              {
+                signal:
+                  controller.signal,
+              }
             );
 
-          if (cancelled) {
+          if (
+            controller.signal.aborted
+          ) {
             return;
           }
 
@@ -186,7 +162,9 @@ const ProductCard = ({
             )
           );
         } catch {
-          if (cancelled) {
+          if (
+            controller.signal.aborted
+          ) {
             return;
           }
 
@@ -194,7 +172,10 @@ const ProductCard = ({
             false
           );
         } finally {
-          if (!cancelled) {
+          if (
+            !controller.signal
+              .aborted
+          ) {
             setRestockInitialized(
               true
             );
@@ -205,7 +186,7 @@ const ProductCard = ({
     loadRestockAlert();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [
     isAuthenticated,
@@ -213,12 +194,21 @@ const ProductCard = ({
     product.id,
   ]);
 
-  const handleWishlistToggle =
-    async (event) => {
-      event?.preventDefault();
-      event?.stopPropagation();
+  const redirectToLogin =
+    () => {
+      navigate('/login', {
+        state: {
+          from:
+            `${location.pathname}${location.search}`,
+        },
+      });
+    };
 
-      if (!isAuthenticated) {
+  const handleWishlistToggle =
+    async () => {
+      if (
+        !isAuthenticated
+      ) {
         redirectToLogin();
         return;
       }
@@ -242,12 +232,16 @@ const ProductCard = ({
 
   const handleRestockAlert =
     async () => {
-      if (!isAuthenticated) {
+      if (
+        !isAuthenticated
+      ) {
         redirectToLogin();
         return;
       }
 
-      if (restockLoading) {
+      if (
+        restockLoading
+      ) {
         return;
       }
 
@@ -288,7 +282,9 @@ const ProductCard = ({
 
   const handleAddToCart =
     async () => {
-      if (!isAuthenticated) {
+      if (
+        !isAuthenticated
+      ) {
         redirectToLogin();
         return;
       }
@@ -309,7 +305,6 @@ const ProductCard = ({
           addCartItem({
             productId:
               product.id,
-
             quantity: 1,
           })
         ).unwrap();
@@ -322,25 +317,30 @@ const ProductCard = ({
       }
     };
 
-  const handleBuyNow = () => {
-    if (!isAuthenticated) {
-      redirectToLogin();
-      return;
-    }
+  const handleBuyNow =
+    () => {
+      if (
+        !isAuthenticated
+      ) {
+        redirectToLogin();
+        return;
+      }
 
-    if (isOutOfStock) {
-      return;
-    }
+      if (
+        isOutOfStock
+      ) {
+        return;
+      }
 
-    dispatch(
-      prepareBuyNow({
-        product,
-        quantity: 1,
-      })
-    );
+      dispatch(
+        prepareBuyNow({
+          product,
+          quantity: 1,
+        })
+      );
 
-    navigate('/checkout');
-  };
+      navigate('/checkout');
+    };
 
   return (
     <article
@@ -361,11 +361,16 @@ const ProductCard = ({
           aria-label={`Ver ${product.name}`}
         >
           <img
-            src={mainImage}
-            alt={product.name}
+            src={
+              mainImage
+            }
+            alt={
+              product.name
+            }
             className={
               styles.productImage
             }
+            draggable="false"
           />
         </Link>
 
@@ -435,38 +440,54 @@ const ProductCard = ({
           </Link>
         </h3>
 
-        {isOutOfStock ? (
-          <>
-            <div
+        <div
+          className={
+            styles.purchaseRow
+          }
+        >
+          <span
+            className={
+              styles.productPrice
+            }
+          >
+            {formatCurrency(
+              product.price
+            )}
+          </span>
+
+          {isOutOfStock ? (
+            <span
               className={
-                styles.purchaseRow
+                styles.outOfStockStatus
+              }
+            >
+              <PackageX
+                size={16}
+                aria-hidden="true"
+              />
+
+              Agotado
+            </span>
+          ) : (
+            <span
+              className={
+                styles.inStockStatus
               }
             >
               <span
                 className={
-                  styles.productPrice
+                  styles.stockDot
                 }
-              >
-                {Number(
-                  product.price
-                ).toFixed(2)}{' '}
-                €
-              </span>
+                aria-hidden="true"
+              />
 
-              <span
-                className={
-                  styles.outOfStockStatus
-                }
-              >
-                <PackageX
-                  size={17}
-                  aria-hidden="true"
-                />
+              En stock
+            </span>
+          )}
+        </div>
 
-                Agotado
-              </span>
-            </div>
-
+        {isOutOfStock ? (
+          <>
             <button
               type="button"
               onClick={
@@ -507,19 +528,8 @@ const ProductCard = ({
                   ? 'Comprobando...'
                   : restockSubscribed
                     ? 'Aviso activado'
-                    : 'Avísame cuando esté disponible'}
+                    : 'Avísame cuando vuelva'}
             </button>
-
-            {restockSubscribed && (
-              <p
-                className={
-                  styles.restockHelp
-                }
-                role="status"
-              >
-                Te enviaremos un correo cuando vuelva a estar disponible.
-              </p>
-            )}
 
             {restockError && (
               <p
@@ -533,53 +543,11 @@ const ProductCard = ({
             )}
           </>
         ) : (
-          <>
-            <div
-              className={
-                styles.purchaseRow
-              }
-            >
-              <span
-                className={
-                  styles.productPrice
-                }
-              >
-                {Number(
-                  product.price
-                ).toFixed(2)}{' '}
-                €
-              </span>
-
-              <button
-                type="button"
-                onClick={
-                  handleAddToCart
-                }
-                disabled={
-                  cartMutationLoading
-                }
-                className={
-                  styles.cartButton
-                }
-                aria-label={`Añadir ${product.name} al carrito`}
-              >
-                <ShoppingCart
-                  size={20}
-                  aria-hidden="true"
-                />
-
-                <span
-                  className={
-                    styles.cartButtonText
-                  }
-                >
-                  {isAddingToCart
-                    ? 'Añadiendo...'
-                    : 'Añadir'}
-                </span>
-              </button>
-            </div>
-
+          <div
+            className={
+              styles.actions
+            }
+          >
             <button
               type="button"
               onClick={
@@ -591,7 +559,40 @@ const ProductCard = ({
             >
               Comprar ahora
             </button>
-          </>
+
+            <button
+              type="button"
+              onClick={
+                handleAddToCart
+              }
+              disabled={
+                cartMutationLoading
+              }
+              className={
+                styles.cartButton
+              }
+              aria-label={
+                isAddingToCart
+                  ? `Añadiendo ${product.name} al carrito`
+                  : `Añadir ${product.name} al carrito`
+              }
+            >
+              <ShoppingCart
+                size={20}
+                aria-hidden="true"
+              />
+
+              <span
+                className={
+                  styles.cartButtonText
+                }
+              >
+                {isAddingToCart
+                  ? 'Añadiendo...'
+                  : 'Añadir'}
+              </span>
+            </button>
+          </div>
         )}
       </div>
     </article>
