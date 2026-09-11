@@ -12,7 +12,20 @@ import {
   buyNowApi,
 } from '../../api/cart.api';
 
-import { logoutUser } from './authSlice';
+import {
+  getProductById,
+} from '../../api/products.api';
+
+import {
+  addGuestCartItem,
+  readGuestCart,
+  removeGuestCartItem,
+  updateGuestCartItem,
+} from '../../utils/guestCart';
+
+import {
+  logoutUser,
+} from './authSlice';
 
 const getErrorPayload = (
   error,
@@ -29,19 +42,124 @@ const getErrorPayload = (
     error?.code || null,
 });
 
+const getProductFromResponse = (
+  response
+) =>
+  response?.data ?? null;
+
+const hydrateGuestCart = async (
+  guestItems
+) => {
+  const hydratedItems = [];
+
+  for (const guestItem of guestItems) {
+    try {
+      const response =
+        await getProductById(
+          guestItem.productId
+        );
+
+      const product =
+        getProductFromResponse(
+          response
+        );
+
+      if (!product) {
+        continue;
+      }
+
+      const stock =
+        Math.max(
+          0,
+          Number(
+            product.stock || 0
+          )
+        );
+
+      if (stock <= 0) {
+        continue;
+      }
+
+      const quantity =
+        Math.min(
+          Math.max(
+            1,
+            Number(
+              guestItem.quantity ||
+                1
+            )
+          ),
+          stock
+        );
+
+      hydratedItems.push({
+        id:
+          `guest-${product.id}`,
+        productId:
+          product.id,
+        quantity,
+        product,
+        isGuest: true,
+      });
+    } catch {
+      continue;
+    }
+  }
+
+  return hydratedItems;
+};
+
 export const fetchCart =
   createAsyncThunk(
     'cart/fetchCart',
 
     async (
       _,
-      { rejectWithValue }
+      {
+        getState,
+        rejectWithValue,
+      }
     ) => {
+      const {
+        isAuthenticated,
+      } = getState().auth;
+
+      if (!isAuthenticated) {
+        try {
+          const guestItems =
+            readGuestCart();
+
+          const items =
+            await hydrateGuestCart(
+              guestItems
+            );
+
+          return {
+            mode: 'guest',
+            cart: {
+              items,
+            },
+          };
+        } catch (error) {
+          return rejectWithValue(
+            getErrorPayload(
+              error,
+              'No se ha podido cargar el carrito'
+            )
+          );
+        }
+      }
+
       try {
         const response =
           await getCartApi();
 
-        return response.data;
+        return {
+          mode:
+            'authenticated',
+          cart:
+            response.data,
+        };
       } catch (error) {
         return rejectWithValue(
           getErrorPayload(
@@ -60,7 +178,8 @@ export const fetchCart =
         const {
           initialized,
           loading,
-        } = getState().cart;
+        } =
+          getState().cart;
 
         return (
           !initialized &&
@@ -79,8 +198,44 @@ export const addCartItem =
         productId,
         quantity = 1,
       },
-      { rejectWithValue }
+      {
+        getState,
+        rejectWithValue,
+      }
     ) => {
+      const {
+        isAuthenticated,
+      } = getState().auth;
+
+      if (!isAuthenticated) {
+        try {
+          const guestItems =
+            addGuestCartItem({
+              productId,
+              quantity,
+            });
+
+          const items =
+            await hydrateGuestCart(
+              guestItems
+            );
+
+          return {
+            mode: 'guest',
+            cart: {
+              items,
+            },
+          };
+        } catch (error) {
+          return rejectWithValue(
+            getErrorPayload(
+              error,
+              'No se ha podido añadir el producto al carrito'
+            )
+          );
+        }
+      }
+
       try {
         const response =
           await addCartItemApi({
@@ -88,7 +243,12 @@ export const addCartItem =
             quantity,
           });
 
-        return response.data;
+        return {
+          mode:
+            'authenticated',
+          cart:
+            response.data,
+        };
       } catch (error) {
         return rejectWithValue(
           getErrorPayload(
@@ -108,9 +268,58 @@ export const updateCartItemQuantity =
       {
         itemId,
         quantity,
+        productId,
       },
-      { rejectWithValue }
+      {
+        getState,
+        rejectWithValue,
+      }
     ) => {
+      const {
+        isAuthenticated,
+      } = getState().auth;
+
+      if (!isAuthenticated) {
+        try {
+          const guestProductId =
+            Number(
+              productId ||
+                String(
+                  itemId
+                ).replace(
+                  'guest-',
+                  ''
+                )
+            );
+
+          const guestItems =
+            updateGuestCartItem({
+              productId:
+                guestProductId,
+              quantity,
+            });
+
+          const items =
+            await hydrateGuestCart(
+              guestItems
+            );
+
+          return {
+            mode: 'guest',
+            cart: {
+              items,
+            },
+          };
+        } catch (error) {
+          return rejectWithValue(
+            getErrorPayload(
+              error,
+              'No se ha podido actualizar la cantidad'
+            )
+          );
+        }
+      }
+
       try {
         const response =
           await updateCartItemQuantityApi({
@@ -118,7 +327,12 @@ export const updateCartItemQuantity =
             quantity,
           });
 
-        return response.data;
+        return {
+          mode:
+            'authenticated',
+          cart:
+            response.data,
+        };
       } catch (error) {
         return rejectWithValue(
           getErrorPayload(
@@ -135,21 +349,132 @@ export const removeCartItem =
     'cart/removeCartItem',
 
     async (
-      itemId,
-      { rejectWithValue }
+      {
+        itemId,
+        productId,
+      },
+      {
+        getState,
+        rejectWithValue,
+      }
     ) => {
+      const {
+        isAuthenticated,
+      } = getState().auth;
+
+      if (!isAuthenticated) {
+        try {
+          const guestProductId =
+            Number(
+              productId ||
+                String(
+                  itemId
+                ).replace(
+                  'guest-',
+                  ''
+                )
+            );
+
+          const guestItems =
+            removeGuestCartItem(
+              guestProductId
+            );
+
+          const items =
+            await hydrateGuestCart(
+              guestItems
+            );
+
+          return {
+            mode: 'guest',
+            cart: {
+              items,
+            },
+          };
+        } catch (error) {
+          return rejectWithValue(
+            getErrorPayload(
+              error,
+              'No se ha podido eliminar el producto del carrito'
+            )
+          );
+        }
+      }
+
       try {
         const response =
           await removeCartItemApi(
             itemId
           );
 
-        return response.data;
+        return {
+          mode:
+            'authenticated',
+          cart:
+            response.data,
+        };
       } catch (error) {
         return rejectWithValue(
           getErrorPayload(
             error,
             'No se ha podido eliminar el producto del carrito'
+          )
+        );
+      }
+    }
+  );
+
+export const syncGuestCart =
+  createAsyncThunk(
+    'cart/syncGuestCart',
+
+    async (
+      _,
+      {
+        getState,
+        rejectWithValue,
+      }
+    ) => {
+      const {
+        isAuthenticated,
+      } = getState().auth;
+
+      if (!isAuthenticated) {
+        return null;
+      }
+
+      const pendingItems =
+        readGuestCart();
+
+      if (
+        pendingItems.length === 0
+      ) {
+        return null;
+      }
+
+      try {
+        for (
+          const item of
+            pendingItems
+        ) {
+          await addCartItemApi({
+            productId:
+              item.productId,
+            quantity:
+              item.quantity,
+          });
+
+          removeGuestCartItem(
+            item.productId
+          );
+        }
+
+        return true;
+      } catch (error) {
+        return rejectWithValue(
+          getErrorPayload(
+            error,
+            'No se ha podido sincronizar el carrito'
           )
         );
       }
@@ -162,8 +487,25 @@ export const checkoutCart =
 
     async (
       _,
-      { rejectWithValue }
+      {
+        getState,
+        rejectWithValue,
+      }
     ) => {
+      const {
+        isAuthenticated,
+      } = getState().auth;
+
+      if (!isAuthenticated) {
+        return rejectWithValue({
+          message:
+            'Debes iniciar sesión para continuar con la compra',
+          status: 401,
+          code:
+            'AUTH_REQUIRED',
+        });
+      }
+
       try {
         const response =
           await checkoutApi();
@@ -189,8 +531,25 @@ export const checkoutBuyNow =
         productId,
         quantity = 1,
       },
-      { rejectWithValue }
+      {
+        getState,
+        rejectWithValue,
+      }
     ) => {
+      const {
+        isAuthenticated,
+      } = getState().auth;
+
+      if (!isAuthenticated) {
+        return rejectWithValue({
+          message:
+            'Debes iniciar sesión para continuar con la compra',
+          status: 401,
+          code:
+            'AUTH_REQUIRED',
+        });
+      }
+
       try {
         const response =
           await buyNowApi({
@@ -220,12 +579,14 @@ const initialState = {
   loading: false,
   mutationLoading: false,
   checkoutLoading: false,
+  syncingGuestCart: false,
 
   error: null,
   errorCode: null,
 
   lastOrder: null,
   initialized: false,
+  mode: 'guest',
 };
 
 const createInitialState = () => ({
@@ -263,359 +624,445 @@ const setCart = (
       : [];
 };
 
-const cartSlice = createSlice({
-  name: 'cart',
-  initialState,
+const setCartPayload = (
+  state,
+  action
+) => {
+  state.mode =
+    action.payload?.mode ||
+    state.mode;
 
-  reducers: {
-    clearCartError: (
-      state
-    ) => {
-      state.error = null;
-      state.errorCode = null;
-    },
+  setCart(
+    state,
+    action.payload?.cart
+  );
+};
 
-    resetCart: () =>
-      createInitialState(),
+const cartSlice =
+  createSlice({
+    name: 'cart',
+    initialState,
 
-    clearLastOrder: (
-      state
-    ) => {
-      state.lastOrder = null;
-    },
+    reducers: {
+      clearCartError: (
+        state
+      ) => {
+        state.error = null;
+        state.errorCode =
+          null;
+      },
 
-    prepareBuyNow: (
-      state,
-      action
-    ) => {
-      state.buyNowItem = {
-        product:
-          action.payload.product,
+      resetCart: () =>
+        createInitialState(),
 
-        quantity:
-          Number(
-            action.payload.quantity ||
-              1
-          ),
-      };
+      clearLastOrder: (
+        state
+      ) => {
+        state.lastOrder =
+          null;
+      },
 
-      state.checkoutMode =
-        'buyNow';
+      prepareBuyNow: (
+        state,
+        action
+      ) => {
+        state.buyNowItem = {
+          product:
+            action.payload
+              .product,
 
-      state.error = null;
-      state.errorCode = null;
-    },
+          quantity:
+            Number(
+              action.payload
+                .quantity || 1
+            ),
+        };
 
-    prepareCartCheckout: (
-      state
-    ) => {
-      state.checkoutMode =
-        'cart';
+        state.checkoutMode =
+          'buyNow';
 
-      /*
-       * Entrar al checkout desde
-       * el carrito invalida cualquier
-       * "Comprar ahora" anterior.
-       */
-      state.buyNowItem = null;
+        state.error = null;
+        state.errorCode =
+          null;
+      },
 
-      state.error = null;
-      state.errorCode = null;
-    },
+      prepareCartCheckout: (
+        state
+      ) => {
+        state.checkoutMode =
+          'cart';
 
-    clearBuyNow: (
-      state
-    ) => {
-      state.buyNowItem =
-        null;
+        state.buyNowItem =
+          null;
 
-      if (
-        state.checkoutMode ===
-        'buyNow'
-      ) {
+        state.error = null;
+        state.errorCode =
+          null;
+      },
+
+      clearBuyNow: (
+        state
+      ) => {
+        state.buyNowItem =
+          null;
+
+        if (
+          state.checkoutMode ===
+          'buyNow'
+        ) {
+          state.checkoutMode =
+            null;
+        }
+      },
+
+      resetCartForGuest: (
+        state
+      ) => {
+        state.cart = null;
+        state.items = [];
+        state.buyNowItem =
+          null;
         state.checkoutMode =
           null;
-      }
+        state.loading = false;
+        state.mutationLoading =
+          false;
+        state.checkoutLoading =
+          false;
+        state.syncingGuestCart =
+          false;
+        state.error = null;
+        state.errorCode = null;
+        state.lastOrder = null;
+        state.initialized =
+          false;
+        state.mode = 'guest';
+      },
     },
-  },
 
-  extraReducers: (
-    builder
-  ) => {
-    builder
-      .addCase(
-        fetchCart.pending,
-        (state) => {
-          state.loading = true;
-          state.error = null;
-          state.errorCode = null;
-        }
-      )
+    extraReducers: (
+      builder
+    ) => {
+      builder
+        .addCase(
+          fetchCart.pending,
+          (state) => {
+            state.loading =
+              true;
+            state.error = null;
+            state.errorCode =
+              null;
+          }
+        )
 
-      .addCase(
-        fetchCart.fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.loading = false;
-          state.initialized =
-            true;
-
-          setCart(
-            state,
-            action.payload
-          );
-        }
-      )
-
-      .addCase(
-        fetchCart.rejected,
-        (
-          state,
-          action
-        ) => {
-          state.loading = false;
-          state.initialized =
-            true;
-
-          setError(
+        .addCase(
+          fetchCart.fulfilled,
+          (
             state,
             action
-          );
-        }
-      )
+          ) => {
+            state.loading =
+              false;
+            state.initialized =
+              true;
 
-      .addCase(
-        addCartItem.pending,
-        (state) => {
-          state.mutationLoading =
-            true;
+            setCartPayload(
+              state,
+              action
+            );
+          }
+        )
 
-          state.error = null;
-          state.errorCode = null;
-        }
-      )
-
-      .addCase(
-        addCartItem.fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.mutationLoading =
-            false;
-
-          setCart(
-            state,
-            action.payload
-          );
-        }
-      )
-
-      .addCase(
-        addCartItem.rejected,
-        (
-          state,
-          action
-        ) => {
-          state.mutationLoading =
-            false;
-
-          setError(
+        .addCase(
+          fetchCart.rejected,
+          (
             state,
             action
-          );
-        }
-      )
+          ) => {
+            state.loading =
+              false;
+            state.initialized =
+              true;
 
-      .addCase(
-        updateCartItemQuantity.pending,
-        (state) => {
-          state.mutationLoading =
-            true;
+            setError(
+              state,
+              action
+            );
+          }
+        )
 
-          state.error = null;
-          state.errorCode = null;
-        }
-      )
+        .addCase(
+          addCartItem.pending,
+          (state) => {
+            state.mutationLoading =
+              true;
 
-      .addCase(
-        updateCartItemQuantity.fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.mutationLoading =
-            false;
+            state.error = null;
+            state.errorCode =
+              null;
+          }
+        )
 
-          setCart(
-            state,
-            action.payload
-          );
-        }
-      )
-
-      .addCase(
-        updateCartItemQuantity.rejected,
-        (
-          state,
-          action
-        ) => {
-          state.mutationLoading =
-            false;
-
-          setError(
+        .addCase(
+          addCartItem.fulfilled,
+          (
             state,
             action
-          );
-        }
-      )
+          ) => {
+            state.mutationLoading =
+              false;
+            state.initialized =
+              true;
 
-      .addCase(
-        removeCartItem.pending,
-        (state) => {
-          state.mutationLoading =
-            true;
+            setCartPayload(
+              state,
+              action
+            );
+          }
+        )
 
-          state.error = null;
-          state.errorCode = null;
-        }
-      )
-
-      .addCase(
-        removeCartItem.fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.mutationLoading =
-            false;
-
-          setCart(
-            state,
-            action.payload
-          );
-        }
-      )
-
-      .addCase(
-        removeCartItem.rejected,
-        (
-          state,
-          action
-        ) => {
-          state.mutationLoading =
-            false;
-
-          setError(
+        .addCase(
+          addCartItem.rejected,
+          (
             state,
             action
-          );
-        }
-      )
+          ) => {
+            state.mutationLoading =
+              false;
 
-      .addCase(
-        checkoutCart.pending,
-        (state) => {
-          state.checkoutLoading =
-            true;
+            setError(
+              state,
+              action
+            );
+          }
+        )
 
-          state.error = null;
-          state.errorCode = null;
-        }
-      )
+        .addCase(
+          updateCartItemQuantity
+            .pending,
+          (state) => {
+            state.mutationLoading =
+              true;
 
-      .addCase(
-        checkoutCart.fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.checkoutLoading =
-            false;
+            state.error = null;
+            state.errorCode =
+              null;
+          }
+        )
 
-          state.lastOrder =
-            action.payload;
-
-          state.cart = null;
-          state.items = [];
-          state.buyNowItem = null;
-          state.checkoutMode = null;
-        }
-      )
-
-      .addCase(
-        checkoutCart.rejected,
-        (
-          state,
-          action
-        ) => {
-          state.checkoutLoading =
-            false;
-
-          setError(
+        .addCase(
+          updateCartItemQuantity
+            .fulfilled,
+          (
             state,
             action
-          );
-        }
-      )
+          ) => {
+            state.mutationLoading =
+              false;
 
-      .addCase(
-        checkoutBuyNow.pending,
-        (state) => {
-          state.checkoutLoading =
-            true;
+            setCartPayload(
+              state,
+              action
+            );
+          }
+        )
 
-          state.error = null;
-          state.errorCode = null;
-        }
-      )
-
-      .addCase(
-        checkoutBuyNow.fulfilled,
-        (
-          state,
-          action
-        ) => {
-          state.checkoutLoading =
-            false;
-
-          state.lastOrder =
-            action.payload;
-
-          /*
-           * Comprar ahora NO modifica
-           * el carrito normal.
-           */
-          state.buyNowItem = null;
-          state.checkoutMode = null;
-        }
-      )
-
-      .addCase(
-        checkoutBuyNow.rejected,
-        (
-          state,
-          action
-        ) => {
-          state.checkoutLoading =
-            false;
-
-          setError(
+        .addCase(
+          updateCartItemQuantity
+            .rejected,
+          (
             state,
             action
-          );
-        }
-      )
+          ) => {
+            state.mutationLoading =
+              false;
 
-      .addCase(
-        logoutUser.fulfilled,
-        () =>
-          createInitialState()
-      );
-  },
-});
+            setError(
+              state,
+              action
+            );
+          }
+        )
+
+        .addCase(
+          removeCartItem.pending,
+          (state) => {
+            state.mutationLoading =
+              true;
+
+            state.error = null;
+            state.errorCode =
+              null;
+          }
+        )
+
+        .addCase(
+          removeCartItem.fulfilled,
+          (
+            state,
+            action
+          ) => {
+            state.mutationLoading =
+              false;
+
+            setCartPayload(
+              state,
+              action
+            );
+          }
+        )
+
+        .addCase(
+          removeCartItem.rejected,
+          (
+            state,
+            action
+          ) => {
+            state.mutationLoading =
+              false;
+
+            setError(
+              state,
+              action
+            );
+          }
+        )
+
+        .addCase(
+          syncGuestCart.pending,
+          (state) => {
+            state.syncingGuestCart =
+              true;
+          }
+        )
+
+        .addCase(
+          syncGuestCart.fulfilled,
+          (state) => {
+            state.syncingGuestCart =
+              false;
+          }
+        )
+
+        .addCase(
+          syncGuestCart.rejected,
+          (
+            state,
+            action
+          ) => {
+            state.syncingGuestCart =
+              false;
+
+            setError(
+              state,
+              action
+            );
+          }
+        )
+
+        .addCase(
+          checkoutCart.pending,
+          (state) => {
+            state.checkoutLoading =
+              true;
+
+            state.error = null;
+            state.errorCode =
+              null;
+          }
+        )
+
+        .addCase(
+          checkoutCart.fulfilled,
+          (
+            state,
+            action
+          ) => {
+            state.checkoutLoading =
+              false;
+
+            state.lastOrder =
+              action.payload;
+
+            state.cart = null;
+            state.items = [];
+            state.buyNowItem =
+              null;
+            state.checkoutMode =
+              null;
+          }
+        )
+
+        .addCase(
+          checkoutCart.rejected,
+          (
+            state,
+            action
+          ) => {
+            state.checkoutLoading =
+              false;
+
+            setError(
+              state,
+              action
+            );
+          }
+        )
+
+        .addCase(
+          checkoutBuyNow.pending,
+          (state) => {
+            state.checkoutLoading =
+              true;
+
+            state.error = null;
+            state.errorCode =
+              null;
+          }
+        )
+
+        .addCase(
+          checkoutBuyNow.fulfilled,
+          (
+            state,
+            action
+          ) => {
+            state.checkoutLoading =
+              false;
+
+            state.lastOrder =
+              action.payload;
+
+            state.buyNowItem =
+              null;
+            state.checkoutMode =
+              null;
+          }
+        )
+
+        .addCase(
+          checkoutBuyNow.rejected,
+          (
+            state,
+            action
+          ) => {
+            state.checkoutLoading =
+              false;
+
+            setError(
+              state,
+              action
+            );
+          }
+        )
+
+        .addCase(
+          logoutUser.fulfilled,
+          () =>
+            createInitialState()
+        );
+    },
+  });
 
 export const {
   clearCartError,
@@ -624,6 +1071,7 @@ export const {
   prepareBuyNow,
   prepareCartCheckout,
   clearBuyNow,
+  resetCartForGuest,
 } = cartSlice.actions;
 
 export const selectCart = (
@@ -651,15 +1099,15 @@ export const selectCartLoading = (
 ) =>
   state.cart.loading;
 
-export const selectCartMutationLoading = (
-  state
-) =>
-  state.cart.mutationLoading;
+export const selectCartMutationLoading =
+  (state) =>
+    state.cart
+      .mutationLoading;
 
-export const selectCheckoutLoading = (
-  state
-) =>
-  state.cart.checkoutLoading;
+export const selectCheckoutLoading =
+  (state) =>
+    state.cart
+      .checkoutLoading;
 
 export const selectCartError = (
   state
@@ -671,6 +1119,16 @@ export const selectLastOrder = (
 ) =>
   state.cart.lastOrder;
 
+export const selectCartMode = (
+  state
+) =>
+  state.cart.mode;
+
+export const selectGuestCartSyncing =
+  (state) =>
+    state.cart
+      .syncingGuestCart;
+
 export const selectCartItemCount = (
   state
 ) =>
@@ -681,8 +1139,7 @@ export const selectCartItemCount = (
     ) =>
       total +
       Number(
-        item.quantity ||
-          0
+        item.quantity || 0
       ),
     0
   );
@@ -698,20 +1155,17 @@ export const selectCartTotal = (
       const price =
         Number(
           item.product
-            ?.price ||
-            0
+            ?.price || 0
         );
 
       const quantity =
         Number(
-          item.quantity ||
-            0
+          item.quantity || 0
         );
 
       return (
         total +
-        price *
-          quantity
+        price * quantity
       );
     },
     0

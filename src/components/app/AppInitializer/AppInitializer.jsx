@@ -12,11 +12,16 @@ import {
 
 import {
   fetchCart,
+  resetCartForGuest,
+  syncGuestCart,
 } from '../../../store/slices/cartSlice';
 
 import {
   fetchWishlist,
 } from '../../../store/slices/wishlistSlice';
+
+let authenticatedCartInitializationInFlight = false;
+let guestCartInitializationInFlight = false;
 
 const AppInitializer = () => {
   const dispatch = useDispatch();
@@ -33,15 +38,55 @@ const AppInitializer = () => {
   }, [dispatch]);
 
   useEffect(() => {
+    if (!authInitialized) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      if (guestCartInitializationInFlight) {
+        return;
+      }
+
+      guestCartInitializationInFlight = true;
+
+      dispatch(resetCartForGuest());
+
+      dispatch(fetchCart()).finally(() => {
+        guestCartInitializationInFlight = false;
+      });
+
+      return;
+    }
+
     if (
-      !authInitialized ||
-      !isAuthenticated
+      authenticatedCartInitializationInFlight
     ) {
       return;
     }
 
-    dispatch(fetchCart());
-    dispatch(fetchWishlist());
+    authenticatedCartInitializationInFlight = true;
+
+    const initializeAuthenticatedCart =
+      async () => {
+        try {
+          await dispatch(
+            syncGuestCart()
+          ).unwrap();
+        } catch {
+          return;
+        } finally {
+          dispatch(
+            resetCartForGuest()
+          );
+
+          dispatch(fetchCart());
+          dispatch(fetchWishlist());
+
+          authenticatedCartInitializationInFlight = false;
+        }
+      };
+
+    initializeAuthenticatedCart();
   }, [
     dispatch,
     authInitialized,

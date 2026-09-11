@@ -225,11 +225,7 @@ export const Header = () => {
           )}
 
           <Link
-            to={
-              isAuthenticated
-                ? '/cart'
-                : '/login'
-            }
+            to="/cart"
             className={`${styles.iconBtn} ${styles.cartBtn}`}
             aria-label={cartLabel}
             title="Carrito"
@@ -240,17 +236,16 @@ export const Header = () => {
               aria-hidden="true"
             />
 
-            {isAuthenticated &&
-              cartItemCount > 0 && (
-                <span
-                  className={styles.cartBadge}
-                  aria-hidden="true"
-                >
-                  {cartItemCount > 99
-                    ? '99+'
-                    : cartItemCount}
-                </span>
-              )}
+            {cartItemCount > 0 && (
+              <span
+                className={styles.cartBadge}
+                aria-hidden="true"
+              >
+                {cartItemCount > 99
+                  ? '99+'
+                  : cartItemCount}
+              </span>
+            )}
           </Link>
         </div>
       </div>

@@ -73,3 +73,15 @@ export const buyNowApi = async ({
 
   return response.data;
 };
+
+export const getGuestCartProductApi =
+  async (
+    productId
+  ) => {
+    const response =
+      await apiClient.get(
+        `/products/${productId}`
+      );
+
+    return response.data;
+  };

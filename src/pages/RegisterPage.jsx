@@ -6,6 +6,7 @@ import {
 
 import {
   Link,
+  useLocation,
   useNavigate,
 } from 'react-router-dom';
 
@@ -38,6 +39,9 @@ const RegisterPage = () => {
 
   const navigate =
     useNavigate();
+
+  const location =
+    useLocation();
 
   const nameInputRef =
     useRef(null);
@@ -210,11 +214,16 @@ const RegisterPage = () => {
           )
         ).unwrap();
 
+        const destination =
+          typeof location.state?.from ===
+          'string'
+            ? location.state.from
+            : '/products';
+
         navigate(
-          '/products',
+          destination,
           {
-            replace:
-              true,
+            replace: true,
           }
         );
       } catch {
@@ -410,6 +419,9 @@ const RegisterPage = () => {
 
           <Link
             to="/login"
+            state={
+              location.state
+            }
             className={
               styles.authLink
             }
@@ -423,3 +435,4 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
+

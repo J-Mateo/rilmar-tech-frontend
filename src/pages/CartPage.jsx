@@ -73,15 +73,23 @@ const CartPage = () => {
       selectCartTotal
     );
 
+  const isAuthenticated =
+    useSelector(
+      (state) =>
+        state.auth.isAuthenticated
+    );
+
   const handleRemove =
-    async (
-      itemId
-    ) => {
+    async ({
+      itemId,
+      productId,
+    }) => {
       try {
         await dispatch(
-          removeCartItem(
-            itemId
-          )
+          removeCartItem({
+            itemId,
+            productId,
+          })
         ).unwrap();
       } catch {
         return;
@@ -91,12 +99,14 @@ const CartPage = () => {
   const handleQuantityChange =
     async ({
       itemId,
+      productId,
       quantity,
     }) => {
       try {
         await dispatch(
           updateCartItemQuantity({
             itemId,
+            productId,
             quantity,
           })
         ).unwrap();
@@ -107,20 +117,21 @@ const CartPage = () => {
 
   const handleCheckout =
     () => {
-      /*
-       * Indicamos expresamente que
-       * entramos desde el carrito.
-       *
-       * Esto elimina cualquier
-       * "Comprar ahora" anterior.
-       */
+      if (!isAuthenticated) {
+        navigate('/login', {
+          state: {
+            from: '/cart',
+            checkout: true,
+          },
+        });
+        return;
+      }
+
       dispatch(
         prepareCartCheckout()
       );
 
-      navigate(
-        '/checkout'
-      );
+      navigate('/checkout');
     };
 
   if (loading) {
@@ -455,9 +466,12 @@ const CartPage = () => {
                       <button
                         type="button"
                         onClick={() =>
-                          handleRemove(
-                            item.id
-                          )
+                          handleRemove({
+                            itemId:
+                              item.id,
+                            productId:
+                              product?.id,
+                          })
                         }
                         disabled={
                           mutationLoading
@@ -583,3 +597,4 @@ const CartPage = () => {
 };
 
 export default CartPage;
+
