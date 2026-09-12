@@ -5,7 +5,7 @@ Frontend de una aplicación **full-stack de comercio electrónico** orientada a 
 React 19 · Redux Toolkit · React Router · Axios · CSS Modules · Vite · Stripe
 
 [Demo](https://aesthetic-halva-6e8e80.netlify.app) ·
-[Backend API](https://backend-modulo2-api.onrender.com) ·
+[Health API](https://backend-modulo2-api.onrender.com/health) ·
 [Swagger](https://backend-modulo2-api.onrender.com/api/docs) ·
 [Repositorio Backend](https://github.com/J-Mateo/modulo2)
 
