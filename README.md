@@ -24,37 +24,6 @@ https://github.com/J-Mateo/modulo2
 
 ---
 
-# Experiencia de compra
-
-Rilmar Tech permite completar un flujo de compra desde el catálogo hasta la confirmación del pedido.
-
-![Flujo completo de compra](docs/screenshots/checkout-flow.png)
-
-El flujo incluye:
-
-```text
-Producto
-   │
-   ▼
-Carrito
-   │
-   ▼
-Checkout
-   │
-   ▼
-Stripe Checkout
-   │
-   ▼
-Webhook
-   │
-   ▼
-Pedido confirmado
-```
-
-La sesión de Stripe se crea exclusivamente desde el backend. El frontend no calcula el importe definitivo ni modifica el estado del pedido.
-
----
-
 # Home
 
 La página principal presenta el catálogo mediante una experiencia editorial orientada a producto.
@@ -98,28 +67,38 @@ En dispositivos móviles, las categorías utilizan carruseles horizontales y los
 
 ---
 
-# Detalle de producto
+# Experiencia de compra
 
-Cada producto dispone de una vista dedicada con información comercial, imágenes, disponibilidad y acciones de compra.
+Rilmar Tech permite completar el proceso desde la selección de un producto hasta la confirmación del pedido.
 
-![Detalle de producto](docs/screenshots/product-detail.png)
+![Flujo completo de compra](docs/screenshots/checkout-flow.png)
 
-La página incluye:
+La experiencia incluye:
 
-- Imagen principal
-- Galería
-- Nombre
-- Categoría
-- Precio
-- Stock
-- Descripción
-- Wishlist
-- Añadir al carrito
-- Reviews
-- Información de garantía
-- CTA de compra adaptado a móvil
+```text
+Producto
+   │
+   ▼
+Carrito
+   │
+   ▼
+Checkout
+   │
+   ▼
+Stripe Checkout
+   │
+   ▼
+Webhook
+   │
+   ▼
+Pedido confirmado
+```
 
-El producto puede añadirse al carrito sin iniciar sesión.
+Desde el detalle de producto, el usuario puede consultar la galería, descripción, precio, disponibilidad y reviews, añadir el producto al carrito o guardarlo en su wishlist.
+
+El carrito puede utilizarse sin iniciar sesión. La autenticación pasa a ser necesaria al continuar hacia el checkout.
+
+La sesión de Stripe se crea exclusivamente desde el backend. El frontend no calcula el importe definitivo ni modifica el estado del pedido.
 
 ---
 
@@ -238,7 +217,7 @@ A diferencia del carrito, la wishlist requiere autenticación.
 
 ---
 
-# Checkout
+# Checkout y Stripe
 
 El checkout requiere una sesión autenticada.
 
@@ -264,15 +243,9 @@ checkoutUrl
 
 y redirige al usuario a Stripe Checkout.
 
----
+Los datos sensibles de pago se introducen directamente en Stripe. El frontend nunca recibe ni procesa números de tarjeta.
 
-# Stripe Checkout
-
-Los datos sensibles de pago se introducen directamente en Stripe.
-
-El frontend nunca recibe ni procesa números de tarjeta.
-
-El flujo general es:
+El flujo técnico es:
 
 ```text
 Frontend
@@ -966,12 +939,11 @@ Las capturas utilizadas en este README se encuentran dentro del propio repositor
 docs/screenshots/
 ├── home.png
 ├── catalog.png
-├── product-detail.png
 ├── checkout-flow.png
 └── admin-dashboard.png
 ```
 
-Las capturas documentan la Home, el catálogo, el detalle de producto, el flujo completo de compra y el área privada de administración.
+Las capturas documentan la Home, el catálogo, el flujo completo de compra y el área privada de administración.
 
 ---
 
@@ -984,18 +956,6 @@ https://github.com/J-Mateo/rilmar-tech-frontend
 ## Backend
 
 https://github.com/J-Mateo/modulo2
-
----
-
-# Demo
-
-## Aplicación
-
-https://rilmar-tech-frontend.vercel.app
-
-## API
-
-https://backend-modulo2-api.onrender.com
 
 ---
 
