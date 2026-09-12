@@ -1,253 +1,307 @@
 # Rilmar Tech — Frontend
 
-Frontend de **Rilmar Tech**, una aplicación full-stack de comercio electrónico orientada a la venta de productos tecnológicos.
+Frontend de **Rilmar Tech**, una aplicación full-stack de comercio electrónico orientada a productos tecnológicos.
 
-La aplicación ofrece una experiencia completa de compra: catálogo, búsqueda y filtros, detalle de producto, carrito para invitados y usuarios autenticados, wishlist, checkout con Stripe, historial de pedidos y un panel de administración protegido por roles.
+La aplicación está desarrollada con **React 19**, **Redux Toolkit**, **React Router**, **Axios**, **CSS Modules** y **Vite**, y consume una API REST independiente desarrollada con Node.js y Express.
 
-El frontend está desarrollado con **React, Redux Toolkit, React Router, Axios, CSS Modules y Vite**, y consume una API REST independiente desarrollada con Node.js, Express, Prisma, PostgreSQL y MongoDB.
+El proyecto incluye catálogo público, autenticación mediante cookies HTTP-Only, carrito de invitado, sincronización de carrito, wishlist, recuperación de contraseña, Stripe Checkout, historial de pedidos y un panel administrativo protegido por rol.
 
 ---
 
-## Vista previa
+# Demo
 
-### Home
+## Aplicación
+
+https://rilmar-tech-frontend.vercel.app
+
+## API
+
+https://backend-modulo2-api.onrender.com
+
+## Repositorio backend
+
+https://github.com/J-Mateo/modulo2
+
+---
+
+# Experiencia de compra
+
+Rilmar Tech permite completar un flujo de compra desde el catálogo hasta la confirmación del pedido.
+
+![Flujo completo de compra](docs/screenshots/checkout-flow.png)
+
+El flujo incluye:
+
+```text
+Producto
+   │
+   ▼
+Carrito
+   │
+   ▼
+Checkout
+   │
+   ▼
+Stripe Checkout
+   │
+   ▼
+Webhook
+   │
+   ▼
+Pedido confirmado
+```
+
+La sesión de Stripe se crea exclusivamente desde el backend. El frontend no calcula el importe definitivo ni modifica el estado del pedido.
+
+---
+
+# Home
+
+La página principal presenta el catálogo mediante una experiencia editorial orientada a producto.
 
 ![Home de Rilmar Tech](docs/screenshots/home.png)
 
-La página principal combina presentación de marca, productos destacados, navegación por categorías y contenido editorial en una interfaz responsive.
+Incluye:
 
-### Catálogo
-
-![Catálogo de productos](docs/screenshots/catalog.png)
-
-El catálogo permite explorar productos por categorías y utilizar búsqueda, filtros de disponibilidad y precio, además de diferentes criterios de ordenación.
-
-### Detalle de producto
-
-![Detalle de producto](docs/screenshots/product-detail.png)
-
-La ficha de producto incluye galería de imágenes, información comercial, disponibilidad, acciones de compra, wishlist, descripción y reseñas.
-
-### Carrito
-
-![Carrito de compra](docs/screenshots/cart.png)
-
-El carrito permite modificar cantidades, eliminar productos y continuar hacia checkout. También puede utilizarse antes de iniciar sesión.
-
-### Pedido confirmado
-
-![Pedido confirmado](docs/screenshots/order-success.png)
-
-Tras completar el pago, la aplicación consulta el estado real del pedido en el backend antes de mostrar la confirmación de compra.
-
-### Administración
-
-![Dashboard de administración](docs/screenshots/admin-dashboard.png)
-
-El área administrativa centraliza la gestión de productos y permite consultar pedidos y usuarios mediante rutas protegidas para el rol `ADMIN`.
+- Hero principal
+- Hotspots interactivos
+- Selección destacada de productos
+- Categorías
+- Bloques editoriales
+- Elementos de confianza
+- Navegación responsive
 
 ---
 
-# Funcionalidades
+# Catálogo
 
-## Experiencia de compra
+El catálogo organiza los productos por categorías y permite navegar, buscar y filtrar el inventario.
 
-- Home responsive
-- Catálogo público
-- Navegación por categorías
-- Búsqueda de productos
+![Catálogo de Rilmar Tech](docs/screenshots/catalog.png)
+
+Incluye:
+
+- Búsqueda
 - Búsqueda insensible a acentos
-- Filtros por categoría
-- Filtros por precio
-- Filtros por disponibilidad
-- Ordenación de productos
+- Categorías
+- Filtros
+- Disponibilidad
+- Rango de precios
+- Ordenación
 - Paginación
-- Detalle de producto
-- Galería con múltiples imágenes
-- Información de stock
-- Reviews
+- Estados de stock
+- Acceso al detalle de producto
+- Acciones de carrito
+- Wishlist para usuarios autenticados
+
+En dispositivos móviles, las categorías utilizan carruseles horizontales y los filtros se adaptan a una interfaz específica para pantallas pequeñas.
+
+---
+
+# Detalle de producto
+
+Cada producto dispone de una vista dedicada con información comercial, imágenes, disponibilidad y acciones de compra.
+
+![Detalle de producto](docs/screenshots/product-detail.png)
+
+La página incluye:
+
+- Imagen principal
+- Galería
+- Nombre
+- Categoría
+- Precio
+- Stock
+- Descripción
 - Wishlist
-- Carrito para invitados
-- Carrito persistente para usuarios
-- Checkout
-- Stripe Checkout
-- Confirmación de pedido
-- Historial de pedidos
+- Añadir al carrito
+- Reviews
+- Información de garantía
+- CTA de compra adaptado a móvil
+
+El producto puede añadirse al carrito sin iniciar sesión.
 
 ---
 
 # Autenticación
 
-La aplicación dispone de:
+La autenticación utiliza un JWT gestionado mediante una **cookie HTTP-Only** creada por el backend.
+
+El token no se almacena en `localStorage`.
+
+La aplicación implementa:
 
 - Registro
 - Login
 - Logout
 - Persistencia de sesión
-- Recuperación de contraseña
-- Restablecimiento de contraseña
-- Perfil de usuario
 - Rutas protegidas
-- Rutas exclusivas para administradores
+- Rutas exclusivas para invitados
+- Protección por rol `ADMIN`
+- Recuperación de contraseña
+- Invalidación de sesiones anteriores después de restablecer la contraseña
 
-La autenticación se realiza mediante un JWT gestionado por el backend dentro de una cookie **HTTP-Only**.
-
-El frontend no almacena el JWT de autenticación en `localStorage`.
-
-Las peticiones autenticadas se realizan con credenciales habilitadas mediante Axios.
+Las peticiones autenticadas utilizan Axios con credenciales para permitir el intercambio de la cookie entre frontend y backend.
 
 ---
 
 # Recuperación de contraseña
 
-El frontend implementa el flujo completo de recuperación de contraseña.
+El usuario puede solicitar el restablecimiento de su contraseña desde la pantalla de login.
+
+El frontend envía la solicitud al backend y muestra una respuesta genérica independientemente de si la cuenta existe.
+
+El correo contiene un enlace hacia:
 
 ```text
-Forgot password
-       │
-       ▼
-Solicitud al backend
-       │
-       ▼
-Email de recuperación
-       │
-       ▼
-Enlace con token temporal
-       │
-       ▼
-Reset password
-       │
-       ▼
-Nueva contraseña
+/reset-password
 ```
 
-La interfaz aplica la misma política de contraseña utilizada por el backend para ofrecer feedback antes de enviar el formulario.
+con el token temporal correspondiente.
 
-La seguridad definitiva del token, su expiración y su consumo se validan en la API.
+La nueva contraseña debe cumplir la política de seguridad definida por el backend:
+
+- Mínimo 8 caracteres
+- Una letra minúscula
+- Una letra mayúscula
+- Un número
+- Un carácter especial
+
+Después de restablecer la contraseña, las sesiones anteriores quedan invalidadas y el usuario debe iniciar sesión nuevamente.
 
 ---
 
-# Carrito de invitado
+# Carrito
 
-Rilmar Tech permite utilizar el carrito antes de iniciar sesión.
+La aplicación soporta carrito tanto para usuarios invitados como autenticados.
 
-Para un visitante, `localStorage` almacena únicamente:
+## Carrito de invitado
+
+Un visitante puede:
+
+- Añadir productos
+- Eliminar productos
+- Modificar cantidades
+- Recargar la página sin perder el carrito
+- Acceder a `/cart` sin iniciar sesión
+
+El almacenamiento local contiene únicamente:
 
 ```text
 productId
 quantity
 ```
 
-No se almacenan localmente:
+No se almacenan:
 
-- Precios confiables
-- Stock confiable
-- Datos de pago
-- JWT
-- Cookies de autenticación
-- Información personal
+- Precios
+- Nombres
+- Imágenes
+- Stock
+- Tokens
+- Datos personales
+- Información de sesión
 
-Los datos necesarios para representar cada producto se obtienen de la API pública y se mantienen en memoria.
+Los datos almacenados localmente se consideran no confiables.
 
-Cuando el usuario inicia sesión o completa el registro, el carrito de invitado se sincroniza con el carrito persistente del backend.
+## Sincronización después del login
+
+Cuando un usuario inicia sesión o se registra, el carrito de invitado se sincroniza con el backend.
+
+El frontend envía únicamente:
 
 ```text
-Guest cart
-    │
-    ▼
-Login / Register
-    │
-    ▼
-Sync productId + quantity
-    │
-    ▼
-Backend validation
-    │
-    ▼
-Authenticated cart
+productId
+quantity
 ```
 
-Durante la sincronización, el frontend envía únicamente el identificador del producto y la cantidad.
-
-El backend continúa siendo la fuente de verdad para:
+El backend vuelve a validar:
 
 - Existencia del producto
-- Estado del producto
-- Precio
+- Estado
 - Stock
-- Total
-- Pedido
+- Precio
 
-Si una sincronización falla parcialmente, solo se eliminan del almacenamiento local los elementos que ya hayan sido sincronizados correctamente.
+Cada producto se elimina del carrito local únicamente después de que su sincronización con el backend haya finalizado correctamente.
 
-El cierre de sesión no copia el carrito autenticado al almacenamiento local del navegador.
+De esta forma, un fallo parcial de red no elimina los productos que todavía no han podido sincronizarse.
 
 ---
 
 # Wishlist
 
-La wishlist requiere autenticación.
+Los usuarios autenticados pueden mantener una lista de productos favoritos.
 
-Los productos guardados se mantienen mediante el backend, por lo que la lista de deseos persiste entre sesiones mientras se utilice la misma cuenta.
+La wishlist forma parte del estado global gestionado con Redux Toolkit y se sincroniza con el backend.
+
+A diferencia del carrito, la wishlist requiere autenticación.
 
 ---
 
-# Checkout y Stripe
+# Checkout
 
-Rilmar Tech utiliza **Stripe Checkout** para procesar los pagos.
+El checkout requiere una sesión autenticada.
 
-La sesión de Stripe se crea siempre en el backend.
+Antes de iniciar el pago, el frontend solicita al backend la preparación del pedido.
 
-El frontend no determina el importe definitivo de la compra ni crea sesiones de pago directamente.
+El backend es responsable de:
 
-Flujo:
+- Validar el usuario
+- Validar los productos
+- Validar el stock
+- Determinar los precios
+- Calcular el total
+- Crear el pedido
+- Reservar stock
+- Crear la Stripe Checkout Session
+
+El frontend recibe:
 
 ```text
-Cart
-  │
-  ▼
-Backend checkout
-  │
-  ▼
-Stock reservado
-  │
-  ▼
-Order PENDING
-  │
-  ▼
-Stripe Checkout Session
-  │
-  ▼
-Frontend redirect
-  │
-  ▼
-Stripe Checkout
-  │
-  ▼
-Webhook verificado
-  │
-  ▼
-PAID / CANCELLED
+orderId
+checkoutUrl
 ```
 
-El backend responde al inicio del checkout con información equivalente a:
+y redirige al usuario a Stripe Checkout.
 
-```json
-{
-  "orderId": 184,
-  "checkoutUrl": "https://checkout.stripe.com/..."
-}
+---
+
+# Stripe Checkout
+
+Los datos sensibles de pago se introducen directamente en Stripe.
+
+El frontend nunca recibe ni procesa números de tarjeta.
+
+El flujo general es:
+
+```text
+Frontend
+   │
+   ▼
+Backend
+   │
+   ├── valida carrito
+   ├── reserva stock
+   ├── crea Order PENDING
+   └── crea Stripe Checkout Session
+             │
+             ▼
+           Stripe
+             │
+             ▼
+           Webhook
+             │
+             ▼
+        PAID / CANCELLED
 ```
 
-El frontend utiliza `checkoutUrl` para redirigir al usuario a Stripe.
+La página de éxito no modifica el estado del pedido.
 
-Los datos sensibles de la tarjeta se introducen directamente en la interfaz segura de Stripe y no pasan por formularios propios de Rilmar Tech.
+El webhook del backend es la fuente de verdad para la confirmación del pago.
 
 ---
 
 # Confirmación del pago
-
-La página de éxito no modifica el estado de un pedido.
 
 Después de regresar desde Stripe, el frontend utiliza el identificador de la sesión para consultar al backend.
 
@@ -297,6 +351,8 @@ El frontend dispone de un área protegida para usuarios con rol:
 ```text
 ADMIN
 ```
+
+![Dashboard administrativo](docs/screenshots/admin-dashboard.png)
 
 La navegación administrativa está dividida en:
 
@@ -441,6 +497,8 @@ Redux se utiliza principalmente para dominios globales como:
 - Protección por rol `ADMIN`
 - Estados de carga durante navegación
 
+El despliegue en Vercel incluye un fallback SPA para permitir acceso directo y recarga en rutas gestionadas por React Router.
+
 ## Hooks
 
 `hooks/` contiene lógica reutilizable de React que puede compartirse entre componentes y páginas.
@@ -505,6 +563,12 @@ http://localhost:3000/api
 
 Las peticiones que requieren sesión utilizan credenciales para permitir el intercambio de la cookie HTTP-Only con el backend.
 
+En producción, el frontend consume:
+
+```text
+https://backend-modulo2-api.onrender.com/api
+```
+
 ---
 
 # Routing
@@ -537,6 +601,8 @@ Regreso a checkout success
 
 Esto evita perder el contexto de navegación cuando una ruta protegida requiere volver a autenticar al usuario.
 
+El despliegue de Vercel utiliza `vercel.json` para redirigir las rutas de la SPA hacia `index.html`, permitiendo recargar o abrir directamente rutas como `/products`, `/login` o `/profile`.
+
 ---
 
 # Code splitting
@@ -567,6 +633,7 @@ Esto permite reducir el tamaño del JavaScript inicial necesario para comenzar a
 | Lucide React | Iconografía |
 | Vite | Desarrollo y build |
 | ESLint | Calidad de código |
+| Vercel | Despliegue del frontend |
 
 ---
 
@@ -620,12 +687,10 @@ Para desarrollo local se puede utilizar:
 .env
 ```
 
-En producción, `VITE_API_URL` debe contener la URL pública de la API desplegada.
-
-Ejemplo:
+En producción:
 
 ```env
-VITE_API_URL=https://api.example.com/api
+VITE_API_URL=https://backend-modulo2-api.onrender.com/api
 ```
 
 ## Importante
@@ -682,7 +747,7 @@ a partir de:
 .env.example
 ```
 
-La configuración local actual requiere:
+La configuración local requiere:
 
 ```env
 VITE_API_URL=http://localhost:3000/api
@@ -728,6 +793,8 @@ npm run lint
 npm run build
 ```
 
+El frontend está desplegado en **Vercel** y los pushes a la rama `main` generan nuevos deployments automáticamente.
+
 ---
 
 # Seguridad
@@ -739,6 +806,8 @@ El frontend evita asumir responsabilidades que pertenecen al servidor.
 El JWT no se almacena en `localStorage`.
 
 La sesión se mantiene mediante una cookie HTTP-Only gestionada por el backend.
+
+En producción se utiliza HTTPS y las credenciales se intercambian con el backend mediante CORS configurado para el origen del frontend.
 
 ## Carrito de invitado
 
@@ -771,6 +840,8 @@ La sesión de Stripe se crea en el servidor.
 
 El frontend únicamente recibe la URL necesaria para redirigir al usuario.
 
+La confirmación definitiva del pago procede del estado gestionado por el backend a partir de los eventos de Stripe.
+
 ## Datos de pago
 
 Los datos sensibles de la tarjeta se introducen directamente en Stripe Checkout.
@@ -788,6 +859,10 @@ La API de Rilmar Tech se encuentra en un repositorio independiente:
 **Rilmar Tech Backend**
 
 https://github.com/J-Mateo/modulo2
+
+**API desplegada**
+
+https://backend-modulo2-api.onrender.com
 
 El backend está desarrollado con:
 
@@ -808,9 +883,35 @@ Frontend y backend constituyen conjuntamente la aplicación full-stack Rilmar Te
 
 ---
 
+# Despliegue
+
+## Frontend
+
+El frontend está desplegado en **Vercel**:
+
+https://rilmar-tech-frontend.vercel.app
+
+La configuración de producción utiliza:
+
+```env
+VITE_API_URL=https://backend-modulo2-api.onrender.com/api
+```
+
+Las rutas de React Router disponen de fallback SPA mediante `vercel.json`.
+
+## Backend
+
+El backend está desplegado en **Render**:
+
+https://backend-modulo2-api.onrender.com
+
+La comunicación entre ambos despliegues utiliza HTTPS, CORS con credenciales y cookies HTTP-Only configuradas por el backend.
+
+---
+
 # Estado del proyecto
 
-Actualmente están implementadas:
+Actualmente están implementadas y verificadas:
 
 - ✅ Home responsive
 - ✅ Catálogo público
@@ -835,6 +936,8 @@ Actualmente están implementadas:
 - ✅ Sincronización del carrito tras autenticación
 - ✅ Carrito persistente autenticado
 - ✅ Stripe Checkout
+- ✅ Webhook de Stripe desplegado
+- ✅ Confirmación automática de pagos
 - ✅ Confirmación del estado del pedido
 - ✅ Historial de pedidos
 - ✅ Panel administrativo
@@ -847,7 +950,11 @@ Actualmente están implementadas:
 - ✅ Responsive desktop / mobile
 - ✅ Lazy loading
 - ✅ Code splitting
+- ✅ Routing SPA en producción
 - ✅ Build de producción
+- ✅ Frontend desplegado en Vercel
+- ✅ Backend desplegado en Render
+- ✅ Integración frontend/backend verificada en producción
 
 ---
 
@@ -860,12 +967,11 @@ docs/screenshots/
 ├── home.png
 ├── catalog.png
 ├── product-detail.png
-├── cart.png
-├── order-success.png
+├── checkout-flow.png
 └── admin-dashboard.png
 ```
 
-Estas capturas documentan tanto la experiencia pública de compra como el área privada de administración.
+Las capturas documentan la Home, el catálogo, el detalle de producto, el flujo completo de compra y el área privada de administración.
 
 ---
 
@@ -883,12 +989,13 @@ https://github.com/J-Mateo/modulo2
 
 # Demo
 
-Las URLs públicas se añadirán después de completar el despliegue de producción.
+## Aplicación
 
-```text
-Frontend: pendiente de despliegue
-Backend:  pendiente de despliegue
-```
+https://rilmar-tech-frontend.vercel.app
+
+## API
+
+https://backend-modulo2-api.onrender.com
 
 ---
 
@@ -912,3 +1019,4 @@ El desarrollo se ha centrado especialmente en:
 - Pagos mediante Stripe
 - Administración
 - Calidad de código
+- Despliegue y validación en producción
